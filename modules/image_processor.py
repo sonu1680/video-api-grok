@@ -15,7 +15,7 @@ def generate_image_modules_sequentially(story_id: str, modules: List[dict]) -> L
     Generates images for each module sequentially using Playwright.
     Each module gets a FRESH browser session (open → generate → download → close)
     to avoid stale image issues from previous generations in the masonry grid.
-    Uses a SEPARATE Chrome profile (IMAGE_USER_DATA) from the video endpoints.
+    Uses a SEPARATE Chromium profile (IMAGE_USER_DATA) from the video endpoints.
     """
     log.info(f"[story_id: {story_id}] 🚀 Starting image processor")
     

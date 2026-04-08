@@ -1,5 +1,5 @@
 """
-Quick helper to launch Chrome with the IMAGE profile so you can log in to Grok.
+Quick helper to launch Chromium with the IMAGE profile so you can log in to Grok.
 Run this once, log in manually, then close the browser.
 After that, the /api/generate_images endpoint will use this authenticated profile.
 
@@ -9,9 +9,9 @@ Usage:
 from playwright.sync_api import sync_playwright
 import os, time
 
-IMAGE_USER_DATA = os.path.expanduser("~/.config/google-chrome-bot-image-profile")
+IMAGE_USER_DATA = os.path.expanduser("~/.config/chromium-bot-image-profile")
 
-print(f"🚀 Launching Chrome with IMAGE profile: {IMAGE_USER_DATA}")
+print(f"🚀 Launching Chromium with IMAGE profile: {IMAGE_USER_DATA}")
 print("👉 Please log in to https://grok.com/imagine, then close the browser window.")
 print("   This only needs to be done ONCE.\n")
 

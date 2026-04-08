@@ -45,10 +45,10 @@ logging.basicConfig(
 log = logging.getLogger("GrokAPI")
 
 # ─────────────────────────── QUEUE / SEMAPHORE ────────────────────────────────
-# Only ONE Chrome session can run at a time; we serialize with a semaphore 
+# Only ONE Chromium session can run at a time; we serialize with a semaphore 
 # and track active jobs for the /health endpoint.
 
-_chrome_lock  = asyncio.Semaphore(1)   # serialise generation (1 at a time)
+_chromium_lock  = asyncio.Semaphore(1)   # serialise generation (1 at a time)
 _pending_jobs: dict[str, dict] = {}    # job_id → {"status", "prompt", "path"}
 
 
@@ -110,7 +110,7 @@ class TestPayload(BaseModel):
 async def _run_generation(prompt: str) -> str:
     """
     Run the blocking Playwright automation in a thread-pool executor
-    while holding the Chrome semaphore so only one job runs at a time.
+    while holding the Chromium semaphore so only one job runs at a time.
     """
     job_id     = uuid.uuid4().hex[:8]
     # Use default output path (output.mp4 in project root, replaces old one)
@@ -121,7 +121,7 @@ async def _run_generation(prompt: str) -> str:
     log.info(f"[{job_id}] Queued: «{prompt[:60]}»")
     _pending_jobs[job_id] = {"status": "queued", "prompt": prompt, "path": output_path}
 
-    async with _chrome_lock:
+    async with _chromium_lock:
         log.info(f"[{job_id}] Starting …")
         _pending_jobs[job_id]["status"] = "running"
         loop = asyncio.get_event_loop()
@@ -165,7 +165,7 @@ async def _process_payload_sequentially(payload: Union[TestPayload, List[StoryPa
         # Sort modules by module_number to ensure strict sequential processing
         modules = sorted(story.modules, key=lambda m: m.module_number)
         
-        async with _chrome_lock:
+        async with _chromium_lock:
             # We hold the lock for the entire story so the browser session is isolated.
             loop = asyncio.get_event_loop()
             
@@ -325,8 +325,8 @@ async def api_objectvideo(payload: Union[TestPayload, List[StoryPayload]], backg
 async def _run_objectvideo_pipeline(stories: list) -> None:
     """
     Background worker for /api/objectvideo.
-    Phase 1: Generate images for all modules (separate Chrome profile).
-    Phase 2: Generate videos with those images uploaded (default Chrome profile).
+    Phase 1: Generate images for all modules (separate Chromium profile).
+    Phase 2: Generate videos with those images uploaded (default Chromium profile).
     Then merges, uploads to R2, and fires webhook.
     """
     import datetime
@@ -340,7 +340,7 @@ async def _run_objectvideo_pipeline(stories: list) -> None:
         current_story_id = str(story.story_id if story.story_id is not None else story.id)
         modules = sorted(story.modules, key=lambda m: m.module_number)
         
-        async with _chrome_lock:
+        async with _chromium_lock:
             loop = asyncio.get_event_loop()
             try:
                 # ── PHASE 1: Generate images for all modules ─────────────
@@ -452,7 +452,7 @@ async def _run_image_pipeline(stories: list) -> None:
         current_story_id = str(story.story_id if story.story_id is not None else story.id)
         modules = sorted(story.modules, key=lambda m: m.module_number)
         
-        async with _chrome_lock:
+        async with _chromium_lock:
             loop = asyncio.get_event_loop()
             try:
                 # Generate images sequentially

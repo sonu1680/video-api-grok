@@ -12,8 +12,8 @@ from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeo
 
 # ─────────────────────────── CONFIGURATION ────────────────────────────────────
 
-USER_DATA       = os.path.expanduser("~/.config/google-chrome-bot-profile")
-IMAGE_USER_DATA = os.path.expanduser("~/.config/google-chrome-bot-image-profile")
+USER_DATA       = os.path.expanduser("~/.config/chromium-bot-profile")
+IMAGE_USER_DATA = os.path.expanduser("~/.config/chromium-bot-image-profile")
 PROFILE   = "Default"
 GROK_URL  = "https://grok.com/imagine"
 
@@ -130,7 +130,7 @@ def _human_mouse_jiggle(page, logger=None):
 def _stage_launch(p, log, user_data_dir=None):
     if user_data_dir is None:
         user_data_dir = USER_DATA
-    log.info(f"STAGE 1: Launching Chrome (profile: {user_data_dir})")
+    log.info(f"STAGE 1: Launching Chromium (profile: {user_data_dir})")
     try:
         browser = p.chromium.launch_persistent_context(
             user_data_dir=user_data_dir,
@@ -148,11 +148,11 @@ def _stage_launch(p, log, user_data_dir=None):
             ],
             ignore_default_args=["--enable-automation"],
         )
-        log.info("✅ STAGE 1 PASSED: Chrome launched.")
+        log.info("✅ STAGE 1 PASSED: Chromium launched.")
         return browser
     except Exception as e:
         log.error(f"❌ STAGE 1 FAILED: {e}")
-        raise RuntimeError(f"Chrome launch failed: {e}") from e
+        raise RuntimeError(f"Chromium launch failed: {e}") from e
 
 
 def _stage_navigate(browser, log):
@@ -772,7 +772,7 @@ def start_session(image_path, p, user_data_dir=None) -> dict:
     """
     Start the Grok browser session, navigate, set video mode, and upload the image.
     This session can be reused to generate multiple videos sequentially.
-    Pass user_data_dir to use a different Chrome profile (e.g. for image generation).
+    Pass user_data_dir to use a different Chromium profile (e.g. for image generation).
     """
     if image_path is not None:
         paths_to_check = [image_path] if isinstance(image_path, str) else image_path
