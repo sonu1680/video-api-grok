@@ -1,0 +1,47 @@
+{
+  "stories": [
+    {
+      "id": 1,
+      "title": "भेल पूरी की गलती वाली खोज",
+      "duration": "60 seconds",
+      "modules": [
+        {
+          "module_number": 1,
+          "time": "0-10 sec",
+          "image_generation_prompt": "ancient indian fort kitchen chef preparing food stone walls torches sepia vintage",
+          "video_generation_prompt": "Talking character delivering dialogue on camera with synchronized lip movement. The dialogue being spoken is: 'नमस्कार, मैं राजा की रसोई का मुख्य रसोइया हूँ। उस ज़माने में, राजा के किले में हर भोजन को परफेक्ट बनाना पड़ता था… वरना सिर कलम! हाहा, साला डर लगता था।' Ensure lip movements and pacing synchronize precisely with this dialogue over 10 seconds. Environment: Grand ancient Indian fort kitchen with stone walls, wooden counters, clay pots, flickering torches, spices scattered. Character: Middle-aged Indian chef, stout build, dark skin, mustache, wearing white dhoti-kurta and chef's turban, friendly yet nervous expression. Action: Gesturing with hands while speaking, slight smile with edgy humor. Movement: Subtle head nods and hand waves. Camera slowly pushes in."
+        },
+        {
+          "module_number": 2,
+          "time": "10-20 sec",
+          "image_generation_prompt": "royal feast preparation chaos kitchen servants hurrying sepia vintage",
+          "video_generation_prompt": "Talking character delivering dialogue on camera with synchronized lip movement. The dialogue being spoken is: 'एक दिन राजा ने बड़ा भोज मंगवाया। मैंने सोचा, कुछ नया बनाऊँ… लेकिन जल्दबाज़ी में सामान इधर-उधर हो गया। कमिना समय, कभी साथ नहीं देता!' Ensure lip movements and pacing synchronize precisely with this dialogue over 10 seconds. Environment: Busy fort kitchen with servants rushing, piles of puffed rice, sev, potatoes, chutneys on tables, steam from pots. Character: Middle-aged Indian chef, stout build, dark skin, mustache, wearing white dhoti-kurta and chef's turban, stressed but witty look. Action: Wiping forehead while speaking, light gali with chuckle. Movement: Pacing slightly side to side. Camera subtle zoom in."
+        },
+        {
+          "module_number": 3,
+          "time": "20-30 sec",
+          "image_generation_prompt": "chef curiously mixing ingredients wooden bowls spices sepia vintage",
+          "video_generation_prompt": "Talking character delivering dialogue on camera with synchronized lip movement. The dialogue being spoken is: 'मैंने चावल के फुले हुए दाने लिए, सेव मिलाई, आलू काटे… सोचा, क्या होगा अगर चटनी डाल दूँ? हरामी जिज्ञासा, रोक नहीं पाया।' Ensure lip movements and pacing synchronize precisely with this dialogue over 10 seconds. Environment: Close-up on kitchen counter with wooden bowls of ingredients, colorful spices, ancient utensils, dim torchlight. Character: Middle-aged Indian chef, stout build, dark skin, mustache, wearing white dhoti-kurta and chef's turban, curious and excited eyes. Action: Pretending to mix while speaking, smirk with humor. Movement: Leaning forward slightly. Camera slow pan right."
+        },
+        {
+          "module_number": 4,
+          "time": "30-40 sec",
+          "image_generation_prompt": "chef experimenting pouring chutney into mix confusion sepia vintage",
+          "video_generation_prompt": "Talking character delivering dialogue on camera with synchronized lip movement. The dialogue being spoken is: 'फिर मैंने टमाटर, प्याज़, हरी चटनी सब मिला दिया। लेकिन गलती से नींबू ज्यादा निचोड़ दिया… भेंचो, अब क्या होगा?' Ensure lip movements and pacing synchronize precisely with this dialogue over 10 seconds. Environment: Detailed kitchen scene with mixing bowl center, spilled ingredients, fort windows showing outside battlements. Character: Middle-aged Indian chef, stout build, dark skin, mustache, wearing white dhoti-kurta and chef's turban, surprised expression with edgy gali. Action: Mimicking pouring action while speaking. Movement: Quick hand gestures. Camera gentle tilt up."
+        },
+        {
+          "module_number": 5,
+          "time": "40-50 sec",
+          "image_generation_prompt": "chef tasting accidental mix shock wide eyes sepia vintage",
+          "video_generation_prompt": "Talking character delivering dialogue on camera with synchronized lip movement. The dialogue being spoken is: 'चखा तो… वाह! खट्टा, मीठा, चटपटा सब एक साथ। साला गलती से कमाल हो गया! राजा को चखाया, वो बोले, 'ये क्या जादू है?' Ensure lip movements and pacing synchronize precisely with this dialogue over 10 seconds. Environment: Kitchen with finished mix in bowl, excited atmosphere, light streaming in. Character: Middle-aged Indian chef, stout build, dark skin, mustache, wearing white dhoti-kurta and chef's turban, shocked then delighted face. Action: Tasting gesture, laughing with surprise. Movement: Eyes widening. Camera quick push in."
+        },
+        {
+          "module_number": 6,
+          "time": "50-60 sec",
+          "image_generation_prompt": "king and chef celebrating new dish fort hall feast sepia vintage",
+          "video_generation_prompt": "Talking character delivering dialogue on camera with synchronized lip movement. The dialogue being spoken is: 'और बस, भेल पूरी का जन्म हो गया। आज हर गली में मिलती है। याद रखो, गलतियाँ कभी-कभी चमत्कार बन जाती हैं… जय हो!' Ensure lip movements and pacing synchronize precisely with this dialogue over 10 seconds. Environment: Grand fort hall with feast table, king in background, joyful servants, ornate decorations. Character: Middle-aged Indian chef, stout build, dark skin, mustache, wearing white dhoti-kurta and chef's turban, proud and inspiring smile. Action: Raising hands triumphantly while speaking. Movement: Nodding affirmatively. Camera slow pull out."
+        }
+      ]
+    }
+  ]
+}
