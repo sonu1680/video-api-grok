@@ -134,7 +134,7 @@ def _stage_launch(p, log, user_data_dir=None):
     try:
         browser = p.chromium.launch_persistent_context(
             user_data_dir=user_data_dir,
-            executable_path="/usr/bin/chromium",
+            executable_path="/usr/bin/google-chrome",
             headless=False,
             user_agent=(
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -145,12 +145,6 @@ def _stage_launch(p, log, user_data_dir=None):
                 f"--profile-directory={PROFILE}",
                 "--disable-blink-features=AutomationControlled",
                 "--disable-infobars",
-                "--no-sandbox",
-                "--disable-dev-shm-usage",
-                "--disable-gpu",
-                "--disable-setuid-sandbox",
-                "--no-zygote",
-                "--single-process",
             ],
             ignore_default_args=["--enable-automation"],
         )

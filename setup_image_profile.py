@@ -1,3 +1,4 @@
+
 """
 Quick helper to launch Chrome with the IMAGE profile so you can log in to Grok.
 Run this once, log in manually, then close the browser.
@@ -18,18 +19,12 @@ print("   This only needs to be done ONCE.\n")
 with sync_playwright() as p:
     browser = p.chromium.launch_persistent_context(
         user_data_dir=IMAGE_USER_DATA,
-        executable_path="/usr/bin/chromium",
+        executable_path="/usr/bin/google-chrome",
         headless=False,
         args=[
             "--profile-directory=Default",
             "--disable-blink-features=AutomationControlled",
             "--disable-infobars",
-            "--no-sandbox",
-            "--disable-dev-shm-usage",
-            "--disable-gpu",
-            "--disable-setuid-sandbox",
-            "--no-zygote",
-            "--single-process",
         ],
         ignore_default_args=["--enable-automation"],
     )
