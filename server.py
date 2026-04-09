@@ -26,6 +26,9 @@ from pydantic import BaseModel
 # Import our automation core
 import app as grok_app
 
+# Import job persistence
+from cache.job_persistence import JobPersistence
+
 # ─────────────────────────── CONFIG ───────────────────────────────────────────
 
 BASE_DIR     = Path(__file__).parent
@@ -58,6 +61,39 @@ _pending_jobs: dict[str, dict] = {}    # job_id → {"status", "prompt", "path"}
 async def lifespan(app: FastAPI):
     log.info("🚀 GrokAPI server starting …")
     log.info(f"   Videos dir: {VIDEOS_DIR}")
+
+    # ── Resume unfinished jobs from before last shutdown ──────────────────────
+    pending = JobPersistence.list_pending()
+    if pending:
+        log.info(f"🔁 Found {len(pending)} unfinished job(s) — resuming …")
+        for job in pending:
+            job_id        = job["job_id"]
+            pipeline_type = job["pipeline_type"]
+            stories_raw   = job["stories"]
+
+            # Reconstruct story Pydantic objects from raw dicts
+            story_objs = []
+            for s in stories_raw:
+                try:
+                    story_objs.append(StoryPayload(**s))
+                except Exception as e:
+                    log.warning(f"  ⚠️ Could not deserialize story in job {job_id}: {e}")
+
+            if not story_objs:
+                log.warning(f"  ⚠️ Job {job_id} has no valid stories — skipping.")
+                JobPersistence.mark_failed(job_id, "No valid stories on resume")
+                continue
+
+            log.info(f"  ▶ Resuming job {job_id} ({pipeline_type}) with {len(story_objs)} stories")
+            if pipeline_type == "objectvideo":
+                asyncio.create_task(_run_objectvideo_pipeline(story_objs, job_id=job_id))
+            elif pipeline_type == "generate_images":
+                asyncio.create_task(_run_image_pipeline(story_objs, job_id=job_id))
+            else:
+                log.warning(f"  ⚠️ Unknown pipeline type '{pipeline_type}' for job {job_id}")
+    else:
+        log.info("✅ No pending jobs to resume.")
+
     yield
     log.info("👋 GrokAPI server shutting down.")
 
@@ -315,19 +351,27 @@ async def api_objectvideo(payload: Union[TestPayload, List[StoryPayload]], backg
     No image frames are extracted or uploaded between modules.
     """
     stories = payload.stories if isinstance(payload, TestPayload) else payload
-    background_tasks.add_task(_run_objectvideo_pipeline, stories)
+
+    # Persist payload so the job can be resumed after a server restart
+    story_dicts = [s.dict() for s in stories]
+    job_id = JobPersistence.create("objectvideo", story_dicts)
+    log.info(f"💾 Persisted objectvideo job {job_id} with {len(story_dicts)} stories")
+
+    background_tasks.add_task(_run_objectvideo_pipeline, stories, job_id)
     return JSONResponse(
         status_code=202,
-        content={"status": "processing", "message": "Object video generation started in the background."}
+        content={"status": "processing", "job_id": job_id, "message": "Object video generation started in the background."}
     )
 
 
-async def _run_objectvideo_pipeline(stories: list) -> None:
+async def _run_objectvideo_pipeline(stories: list, job_id: str = None) -> None:
     """
     Background worker for /api/objectvideo.
     Phase 1: Generate images for all modules (separate Chrome profile).
     Phase 2: Generate videos with those images uploaded (default Chrome profile).
     Then merges, uploads to R2, and fires webhook.
+
+    job_id: If provided, progress is checkpointed and the job file is cleaned up on success.
     """
     import datetime
     from modules.image_processor import generate_image_modules_sequentially
@@ -336,6 +380,9 @@ async def _run_objectvideo_pipeline(stories: list) -> None:
     from modules.video_uploader import upload_video_to_r2
     from modules.webhook_sender import send_n8n_webhook
 
+    if job_id:
+        JobPersistence.mark_running(job_id)
+
     for story in stories:
         current_story_id = str(story.story_id if story.story_id is not None else story.id)
         modules = sorted(story.modules, key=lambda m: m.module_number)
@@ -343,30 +390,48 @@ async def _run_objectvideo_pipeline(stories: list) -> None:
         async with _chrome_lock:
             loop = asyncio.get_event_loop()
             try:
-                # ── PHASE 1: Generate images for all modules ─────────────
-                log.info(f"[story_id: {current_story_id}] 📸 Phase 1: Generating images for all modules …")
+                # ── PHASE 1: Generate images for all modules ─────────────────
+                # Check if Phase 1 was already completed (resume case)
+                prog = JobPersistence.get_progress(job_id, current_story_id) if job_id else {}
                 
-                def _run_image_gen():
-                    module_dicts = [m.dict() for m in modules]
-                    return generate_image_modules_sequentially(current_story_id, module_dicts)
-                
-                generated_image_paths = await loop.run_in_executor(None, _run_image_gen)
-                
+                if prog.get("phase1_done"):
+                    log.info(f"[story_id: {current_story_id}] ⏭️  Phase 1 already done — loading cached image paths")
+                    from config import IMAGES_DIR
+                    generated_image_paths = []
+                    for m in modules:
+                        p = IMAGES_DIR / current_story_id / f"module_{m.module_number}img.jpg"
+                        if p.exists() and p.stat().st_size > 0:
+                            generated_image_paths.append(p)
+                else:
+                    log.info(f"[story_id: {current_story_id}] 📸 Phase 1: Generating images …")
+
+                    def _run_image_gen():
+                        module_dicts = [m.dict() for m in modules]
+                        return generate_image_modules_sequentially(current_story_id, module_dicts)
+
+                    generated_image_paths = await loop.run_in_executor(None, _run_image_gen)
+
+                    if job_id:
+                        JobPersistence.update_progress(job_id, current_story_id, phase1_done=True)
+
                 # Build image_paths dict: module_number → image file path
                 image_paths = {}
                 for module, img_path in zip(modules, generated_image_paths):
                     image_paths[module.module_number] = str(img_path)
-                
-                log.info(f"[story_id: {current_story_id}] ✅ Phase 1 complete: {len(image_paths)} images generated")
 
-                # ── PHASE 2: Generate videos with uploaded images ────────
-                log.info(f"[story_id: {current_story_id}] 🎬 Phase 2: Generating videos with uploaded images …")
-                
+                log.info(f"[story_id: {current_story_id}] ✅ Phase 1 complete: {len(image_paths)} images")
+
+                # ── PHASE 2: Generate videos with uploaded images ─────────
+                log.info(f"[story_id: {current_story_id}] 🎬 Phase 2: Generating videos …")
+
                 def _run_gen():
                     module_dicts = [m.dict() for m in modules]
                     return generate_object_modules_sequentially(current_story_id, module_dicts, image_paths=image_paths)
-                
+
                 generated_video_paths = await loop.run_in_executor(None, _run_gen)
+
+                if job_id:
+                    JobPersistence.update_progress(job_id, current_story_id, phase2_done=True)
 
                 if not generated_video_paths:
                     log.warning(f"[story_id: {current_story_id}] ⚠️ No videos generated for objectvideo.")
@@ -422,6 +487,13 @@ async def _run_objectvideo_pipeline(stories: list) -> None:
 
             except Exception as e:
                 log.error(f"[story_id: {current_story_id}] ❌ Pipeline failed: {e}")
+                if job_id:
+                    JobPersistence.mark_failed(job_id, str(e))
+
+    if job_id:
+        job = JobPersistence.load(job_id)
+        if job and job.get("status") not in ("failed",):
+            JobPersistence.mark_done(job_id)
 
 
 @app.post(
@@ -435,23 +507,33 @@ async def api_generate_images(payload: Union[TestPayload, List[StoryPayload]], b
     No R2 upload or webhook is sent.
     """
     stories = payload.stories if isinstance(payload, TestPayload) else payload
-    background_tasks.add_task(_run_image_pipeline, stories)
+
+    # Persist payload for crash recovery
+    story_dicts = [s.dict() for s in stories]
+    job_id = JobPersistence.create("generate_images", story_dicts)
+    log.info(f"💾 Persisted generate_images job {job_id} with {len(story_dicts)} stories")
+
+    background_tasks.add_task(_run_image_pipeline, stories, job_id)
     return JSONResponse(
         status_code=202,
-        content={"status": "processing", "message": "Image generation started in the background."}
+        content={"status": "processing", "job_id": job_id, "message": "Image generation started in the background."}
     )
 
-async def _run_image_pipeline(stories: list) -> None:
+async def _run_image_pipeline(stories: list, job_id: str = None) -> None:
     """
     Background worker for /api/generate_images.
     Generates images, bypassing R2 upload and webhooks.
+    job_id: If provided, progress is checkpointed.
     """
     from modules.image_processor import generate_image_modules_sequentially
+
+    if job_id:
+        JobPersistence.mark_running(job_id)
 
     for story in stories:
         current_story_id = str(story.story_id if story.story_id is not None else story.id)
         modules = sorted(story.modules, key=lambda m: m.module_number)
-        
+
         async with _chrome_lock:
             loop = asyncio.get_event_loop()
             try:
@@ -459,17 +541,26 @@ async def _run_image_pipeline(stories: list) -> None:
                 def _run_gen():
                     module_dicts = [m.dict() for m in modules]
                     return generate_image_modules_sequentially(current_story_id, module_dicts)
-                
+
                 generated_image_paths = await loop.run_in_executor(None, _run_gen)
 
                 if not generated_image_paths:
                     log.warning(f"[story_id: {current_story_id}] ⚠️ No images generated.")
                     continue
                 else:
-                    log.info(f"[story_id: {current_story_id}] 🎉 All images successfully generated and stored locally.")
+                    log.info(f"[story_id: {current_story_id}] 🎉 All images successfully generated.")
+                    if job_id:
+                        JobPersistence.update_progress(job_id, current_story_id, images_done=True)
 
             except Exception as e:
                 log.error(f"[story_id: {current_story_id}] ❌ Image pipeline failed: {e}")
+                if job_id:
+                    JobPersistence.mark_failed(job_id, str(e))
+
+    if job_id:
+        job = JobPersistence.load(job_id)
+        if job and job.get("status") not in ("failed",):
+            JobPersistence.mark_done(job_id)
 
 
 async def _handle_generation(prompt: str, background_tasks: BackgroundTasks) -> FileResponse:

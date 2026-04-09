@@ -29,10 +29,22 @@ IMAGE_UPLOAD_WAIT         = 60
 IMAGE_UPLOAD_VERIFY_TRIES = 20
 PROMPT_VERIFY_TRIES       = 8
 GENERATION_POLL_INTERVAL  = 3
-GENERATION_MAX_WAIT       = 300      # max wait for image generation
-VIDEO_GEN_MAX_WAIT        = 300      # max wait for video generation
+GENERATION_MAX_WAIT       = 120      # max wait for image generation (2 minutes)
+VIDEO_GEN_MAX_WAIT        = 120      # max wait for video generation (2 minutes)
 DOWNLOAD_TIMEOUT_MS       = 90_000
 
+
+
+# ─────────────────────────── CUSTOM EXCEPTIONS ───────────────────────────────
+
+class GrokTimeoutError(RuntimeError):
+    """
+    Raised when a Grok generation stage (image or video) does not complete
+    within the configured timeout window.
+    The caller should close the browser session and start a fresh one before
+    retrying the same module.
+    """
+    pass
 
 
 # ─────────────────────────── LOGGING SETUP ────────────────────────────────────
@@ -467,7 +479,7 @@ def _stage_submit(page, log) -> bool:
         time.sleep(GENERATION_POLL_INTERVAL)
 
     _screenshot(page, "06_generation_timeout.png", log)
-    raise RuntimeError(f"Generation did not complete within {GENERATION_MAX_WAIT}s.")
+    raise GrokTimeoutError(f"Generation did not complete within {GENERATION_MAX_WAIT}s.")
 
 
 def _stage_make_video(page, log) -> bool:
@@ -552,9 +564,9 @@ def _stage_make_video(page, log) -> bool:
             time.sleep(GENERATION_POLL_INTERVAL)
 
         _screenshot(page, "07_video_gen_timeout.png", log)
-        raise RuntimeError(f"Video generation did not complete within {VIDEO_GEN_MAX_WAIT}s.")
+        raise GrokTimeoutError(f"Video generation did not complete within {VIDEO_GEN_MAX_WAIT}s.")
 
-    except RuntimeError:
+    except (RuntimeError, GrokTimeoutError):
         raise
     except Exception as e:
         log.error(f"❌ STAGE 7 FAILED: {e}")
@@ -700,13 +712,13 @@ def _stage_submit_image(page, log) -> bool:
         }""")
         if gen_more:
             log.info(f"✅ 'Generate More' detected — images ready after {elapsed}s!")
-            time.sleep(3)  # small buffer for base64 to fully load
+            time.sleep(2)  # small buffer for base64 to fully load
             return True
         
         if elapsed % 10 < 4:
             log.info(f"   ⏳ Still waiting … {elapsed}s")
                 
-    raise RuntimeError(f"Image generation did not complete within {GENERATION_MAX_WAIT}s.")
+    raise GrokTimeoutError(f"Image generation did not complete within {GENERATION_MAX_WAIT}s.")
 
 
 def _stage_download_image(page, output_path: str, log) -> bool:

@@ -1,0 +1,53 @@
+{
+  "job_id": "ddaeca0f7d46",
+  "pipeline_type": "objectvideo",
+  "created_at": "2026-04-09T18:40:05.698265+00:00",
+  "status": "done",
+  "stories": [
+    {
+      "id": null,
+      "story_id": null,
+      "title": "दिमाग का बैंड बजाने वाले emotions",
+      "description": "Anxiety, Jealousy और Guilt खुद आकर बता रहे हैं कि तुम इन्हें ignore करोगे तो ये तुम्हारी जिंदगी खराब कर देंगे।",
+      "tags": "emotions, mental health, desi, awareness, anxiety, jealousy, guilt",
+      "voiceover_main_prompt": null,
+      "voiceover_script": null,
+      "modules": [
+        {
+          "module_number": 1,
+          "video_generation_prompt": "The Anxiety character is a fully personified, furious version of itself — marching toward camera, pointing aggressively, SCREAMING its dialogue directly at the viewer. No humans. Camera: shaky handheld, rapid push-in. Character clutches head, then screams louder.\n\nओए सुन रे! मैं Anxiety हूँ, हर छोटी बात को तूफान बनाता हूँ, बेवकूफ, मुझे ignore करेगा तो नींद उड़ाऊंगा, दिमाग घुमाऊंगा, जिंदगी नरक बना दूंगा समझ ले अभी",
+          "voiceover": null,
+          "image_generation_prompt": "Pixar-style 3D render of a furious Anxiety character in an abstract dreamlike environment made of cracked ground, floating broken clocks, and swirling grey storm clouds. The Anxiety character appears as a trembling, jittery cloud-like form with angry scrunched cartoon eyes, a tiny nose, two small hands, one pointing aggressively at the viewer, and stubby legs planted wide. The environment feels unstable, with distorted perspective and flickering light. Time appears warped with stretched shadows and vibrating textures. Lighting is harsh and cold with bluish tones, creating tension. Cinematic extreme close-up with slight fisheye distortion enhances panic. The character looks like it is screaming directly at the viewer, veins pulsing, body shaking, and storm energy crackling around, symbolizing overwhelming mental chaos and uncontrollable spiraling thoughts."
+        },
+        {
+          "module_number": 2,
+          "video_generation_prompt": "The Jealousy character is a fully personified, furious version of itself — marching toward camera, pointing aggressively, SCREAMING its dialogue directly at the viewer. No humans. Camera: fast zoom-in, slight tilt. Character throws hands, groans, then screams louder.\n\nओए साले! मैं Jealousy हूँ, दूसरों की खुशी देखके तुझे जलाता हूँ, चुटिया, मुझे नहीं रोका तो रिश्ते तोड़ दूंगा, दिमाग सड़ा दूंगा, तू अकेला मर जाएगा समझा",
+          "voiceover": null,
+          "image_generation_prompt": "Pixar-style 3D render of a furious Jealousy character in an abstract fiery environment with burning cracks, glowing embers, and molten textures surrounding it. The Jealousy character is a green flame-like figure with angry scrunched cartoon eyes, tiny nose, small hands, one pointing aggressively toward the viewer, and stubby legs planted wide. Flames flicker violently around, casting dynamic shadows. Background shows distorted silhouettes of achievements melting away, symbolizing comparison and envy. Lighting is intense with green and orange contrast, creating a toxic glow. Cinematic low-angle shot makes the character look dominant and threatening. The character appears mid-scream, face twisted with rage, sparks flying, and body pulsing with heat, representing internal burning frustration and destructive emotional energy consuming everything around."
+        },
+        {
+          "module_number": 3,
+          "video_generation_prompt": "The Guilt character is a fully personified, furious version of itself — marching toward camera, pointing aggressively, SCREAMING its dialogue directly at the viewer. No humans. Camera: slow push-in then sudden shake. Character slaps forehead, groans, screams louder.\n\nओए हरामी! मैं Guilt हूँ, तेरी गलती बार बार याद दिलाता हूँ, बेवकूफ, मुझे दबाएगा तो चैन नहीं मिलेगा, रातें खराब करूंगा, दिमाग खाऊंगा समझ जा अभी",
+          "voiceover": null,
+          "image_generation_prompt": "Pixar-style 3D render of a furious Guilt character in a dark abstract environment filled with echoing shadows, repeating mirrors, and heavy chains lying on the ground. The Guilt character is a shadowy form with deep tired eyes, tiny nose, small hands, one pointing accusingly at the viewer, and stubby legs planted wide. Mirrors reflect the same character endlessly, creating a loop of self-judgment. Lighting is dim with harsh spotlight on the character, casting long dramatic shadows. Textures are heavy and oppressive, with slow drifting dust particles. Cinematic eye-level confrontation shot intensifies emotional pressure. The character appears to be screaming directly at the viewer, clutching chest, then pointing harder, representing the burden and repetition of unresolved mistakes and inner self-blame."
+        },
+        {
+          "module_number": 4,
+          "video_generation_prompt": "All three characters are fully personified, furious versions of themselves — marching together toward camera, pointing aggressively, SCREAMING at the viewer. No humans. Camera: fast zoom-out then smash push-in. They shout in sync, then one screams louder.\n\nओए गधों! हम Anxiety Jealousy Guilt हैं, हमें ignore करेगा तो जिंदगी बर्बाद, बेवकूफ, संभाल ले खुद को वरना दिमाग फट जाएगा, सब खत्म हो जाएगा समझा अभी",
+          "voiceover": null,
+          "image_generation_prompt": "Pixar-style 3D render showing Anxiety, Jealousy, and Guilt characters together in a chaotic abstract environment combining storm clouds, flames, and shadowy mirrors. The ground is cracked, air filled with sparks and echoes, and lighting shifts between cold blue, fiery orange, and dark shadows. All three characters stand in foreground with furious expressions, cartoon eyes scrunched, tiny noses, each pointing aggressively at the viewer with stubby legs planted wide. The scene is intense, overwhelming, and visually chaotic. Cinematic wide shot slowly pushing in increases pressure. Elements move dynamically around them, creating emotional overload. The characters appear to be screaming together directly at the viewer, with exaggerated expressions and dramatic lighting, representing combined mental overload and complete loss of control."
+        }
+      ]
+    }
+  ],
+  "progress": {
+    "None": {
+      "phase1_done": true,
+      "phase2_done": true,
+      "images_done": false,
+      "completed_modules": []
+    }
+  },
+  "started_at": "2026-04-09T19:04:35.020632+00:00",
+  "completed_at": "2026-04-09T19:09:42.093752+00:00"
+}

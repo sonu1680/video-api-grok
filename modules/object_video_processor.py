@@ -5,56 +5,80 @@ from pathlib import Path
 from typing import List, Dict, Optional
 from playwright.sync_api import sync_playwright
 import app as grok_app
+from app import GrokTimeoutError
 from config import VIDEOS_DIR
 
 log = logging.getLogger("GrokAPI.ObjectVideoProcessor")
 
+VIDEO_GENERATION_MAX_RETRIES = 3   # retries per module before giving up
+RESTART_WAIT_S = 5                  # seconds between session restarts
+
+
+def _start_video_session(story_id: str):
+    """Launch a fresh Playwright + browser session for video generation."""
+    p = sync_playwright().start()
+    session = grok_app.start_session(None, p)
+    session["p_context"] = p
+    if session.get("status") != "success":
+        p.stop()
+        raise RuntimeError(f"Session init failed: {session.get('error')}")
+    log.info(f"[obj_id: {story_id}] ✅ New browser session started")
+    return session
+
+
+def _close_video_session(session: dict, story_id: str):
+    """Safely close browser and playwright context from a session dict."""
+    browser = session.get("browser")
+    p_context = session.get("p_context")
+    session_log = session.get("log", log)
+    try:
+        if browser:
+            grok_app.close_session(browser, session_log)
+    except Exception:
+        pass
+    try:
+        if p_context:
+            p_context.stop()
+    except Exception:
+        pass
+    log.info(f"[obj_id: {story_id}] 👋 Browser session closed")
+
+
 def generate_object_modules_sequentially(
     story_id: str,
     modules: List[dict],
-    image_paths: Optional[Dict[int, str]] = None
+    image_paths: Optional[Dict[int, str]] = None,
 ) -> List[Path]:
     """
     Generates mp4 videos for each module sequentially using Playwright.
+
+    Resilience features:
+    - A single browser session is opened and reused across modules for efficiency.
+    - If a GrokTimeoutError occurs (>2min), the session is closed and a fresh one
+      is started before retrying the exact same module.
+    - Modules with an existing output file are automatically skipped (resume).
+    - After VIDEO_GENERATION_MAX_RETRIES failures the function raises.
 
     Args:
         story_id: Identifier for the current story/job.
         modules: List of module dictionaries containing prompts.
         image_paths: Optional dict mapping module_number → image file path.
-                     When provided, the image is uploaded for that module and
-                     only video_generation_prompt is used as the prompt text.
-                     When not provided, falls back to the original combined-text behavior.
-
-    Returns:
-        List of pathlib.Path objects pointing to the generated videos.
     """
     log.info(f"[obj_id: {story_id}] 🚀 Starting object video processor session")
 
     generated_videos = []
 
-    try:
-        p = sync_playwright().start()
-        # Start session WITHOUT an image (image will be uploaded per-module if available)
-        session = grok_app.start_session(None, p)
-        session["p_context"] = p
-    except Exception as e:
-        log.error(f"[obj_id: {story_id}] ❌ Failed to start browser session: {e}")
-        raise RuntimeError(f"Playwright init failed: {e}")
-
-    if session.get("status") != "success":
-        log.error(f"[obj_id: {story_id}] ❌ Failed to start session: {session.get('error')}")
-        raise RuntimeError(f"Session init failed: {session.get('error')}")
-
-    browser = session["browser"]
-    page = session["page"]
+    # Start the initial session
+    session = _start_video_session(story_id)
+    browser    = session["browser"]
+    page       = session["page"]
     session_log = session["log"]
-    p_context = session["p_context"]
 
     try:
         for module in modules:
             module_number = module.get("module_number")
-            video_prompt = module.get("video_generation_prompt", "")
-            image_prompt = module.get("image_generation_prompt", "")
+            video_prompt  = module.get("video_generation_prompt", "")
+            image_prompt  = module.get("image_generation_prompt", "")
 
             # Ensure prompts are strings
             if not isinstance(video_prompt, str):
@@ -63,14 +87,17 @@ def generate_object_modules_sequentially(
                 image_prompt = json.dumps(image_prompt, ensure_ascii=False, indent=2)
 
             output_video_filename = f"module_{module_number}.mp4"
-            output_video_path = str(VIDEOS_DIR / output_video_filename)
+            output_video_path     = str(VIDEOS_DIR / output_video_filename)
 
-            # --- Resume / Backup Logic ---
+            # ── Resume / Skip Logic ────────────────────────────────────────────
             if Path(output_video_path).exists() and Path(output_video_path).stat().st_size > 0:
-                log.info(f"[obj_id: {story_id}] [module_number: {module_number}] ⏭️ Video already exists. Skipping.")
+                log.info(
+                    f"[obj_id: {story_id}] [module_number: {module_number}] "
+                    f"⏭️  Video already exists. Skipping."
+                )
                 generated_videos.append(Path(output_video_path))
                 continue
-            # -----------------------------
+            # ──────────────────────────────────────────────────────────────────
 
             # Determine if we have a pre-generated image for this module
             module_image_path = None
@@ -78,53 +105,101 @@ def generate_object_modules_sequentially(
                 candidate = image_paths[module_number]
                 if Path(candidate).exists() and Path(candidate).stat().st_size > 0:
                     module_image_path = candidate
-                    log.info(f"[obj_id: {story_id}] [module_number: {module_number}] 🖼️ Using pre-generated image: {candidate}")
-
-            # Always ensure we are in video mode for every module
-            grok_app._stage_video_mode(page, session_log)
-
-            if module_image_path:
-                # Upload the pre-generated image and use only the video prompt
-                grok_app._stage_upload_image(page, module_image_path, session_log)
-                prompt_text = video_prompt
-                log.info(f"[obj_id: {story_id}] [module_number: {module_number}] 🎬 Image uploaded + video prompt")
-            else:
-                # Fallback: combine prompts as text (original behavior)
-                prompt_text = f"IMAGE CONTEXT:\n{image_prompt}\n\n{video_prompt}".strip()
-                log.info(f"[obj_id: {story_id}] [module_number: {module_number}] 🎬 Using combined text prompt (no image)")
+                    log.info(
+                        f"[obj_id: {story_id}] [module_number: {module_number}] "
+                        f"🖼️  Using pre-generated image: {candidate}"
+                    )
 
             success = False
-            retries = 0
-            max_retries = 3
+            attempt = 0
 
-            while retries <= max_retries and not success:
-                log.info(f"[obj_id: {story_id}] [module_number: {module_number}] 🎬 prompt submitted (Attempt {retries + 1})")
+            while attempt <= VIDEO_GENERATION_MAX_RETRIES and not success:
+                log.info(
+                    f"[obj_id: {story_id}] [module_number: {module_number}] "
+                    f"🎬 Video generation attempt {attempt + 1}/{VIDEO_GENERATION_MAX_RETRIES + 1}"
+                )
 
                 try:
-                    result = grok_app.generate_single_video(page, prompt_text, output_video_path, session_log)
+                    # Ensure we are in video mode for every attempt
+                    grok_app._stage_video_mode(page, session_log)
+
+                    if module_image_path:
+                        grok_app._stage_upload_image(page, module_image_path, session_log)
+                        prompt_text = video_prompt
+                        log.info(
+                            f"[obj_id: {story_id}] [module_number: {module_number}] "
+                            f"📤 Image uploaded + video prompt only"
+                        )
+                    else:
+                        prompt_text = f"IMAGE CONTEXT:\n{image_prompt}\n\n{video_prompt}".strip()
+                        log.info(
+                            f"[obj_id: {story_id}] [module_number: {module_number}] "
+                            f"📝 Using combined text prompt (no pre-generated image)"
+                        )
+
+                    result = grok_app.generate_single_video(
+                        page, prompt_text, output_video_path, session_log
+                    )
 
                     if result.get("status") == "success":
-                        log.info(f"[obj_id: {story_id}] [module_number: {module_number}] ✅ video generated (file: {result['file_path']})")
+                        log.info(
+                            f"[obj_id: {story_id}] [module_number: {module_number}] "
+                            f"✅ Video generated → {result['file_path']}"
+                        )
                         success = True
-                        generated_videos.append(Path(result['file_path']))
+                        generated_videos.append(Path(result["file_path"]))
                     else:
                         raise RuntimeError(result.get("error"))
 
+                except GrokTimeoutError as e:
+                    # ── Hard timeout: close session, start fresh, retry ──────────
+                    log.warning(
+                        f"[obj_id: {story_id}] [module_number: {module_number}] "
+                        f"⏰ Generation TIMED OUT (attempt {attempt + 1}): {e}"
+                    )
+
+                    # Close the stale session
+                    _close_video_session(session, story_id)
+
+                    if attempt < VIDEO_GENERATION_MAX_RETRIES:
+                        log.info(
+                            f"[obj_id: {story_id}] [module_number: {module_number}] "
+                            f"🔄 Restarting browser in {RESTART_WAIT_S}s and retrying …"
+                        )
+                        time.sleep(RESTART_WAIT_S)
+                        # Start a completely fresh session
+                        session      = _start_video_session(story_id)
+                        browser      = session["browser"]
+                        page         = session["page"]
+                        session_log  = session["log"]
+                    attempt += 1
+                    continue
+
                 except Exception as e:
-                    log.error(f"[obj_id: {story_id}] [module_number: {module_number}] ❌ failure: {e}")
-                    if retries < max_retries:
-                        log.info(f"[obj_id: {story_id}] [module_number: {module_number}] 🔄 retry attempt {retries + 1}")
-                        time.sleep(5)
-                    retries += 1
+                    log.error(
+                        f"[obj_id: {story_id}] [module_number: {module_number}] "
+                        f"❌ Failure (attempt {attempt + 1}): {e}"
+                    )
+                    if attempt < VIDEO_GENERATION_MAX_RETRIES:
+                        log.info(
+                            f"[obj_id: {story_id}] [module_number: {module_number}] "
+                            f"🔄 Retrying in {RESTART_WAIT_S}s …"
+                        )
+                        time.sleep(RESTART_WAIT_S)
+                    attempt += 1
 
             if not success:
-                log.error(f"[obj_id: {story_id}] 🛑 stopped processing due to module {module_number} failure")
-                raise RuntimeError(f"Failed to generate obj module {module_number} after {max_retries} retries")
-
-        return generated_videos
+                log.error(
+                    f"[obj_id: {story_id}] 🛑 Stopped — "
+                    f"module {module_number} failed after {VIDEO_GENERATION_MAX_RETRIES + 1} attempts"
+                )
+                raise RuntimeError(
+                    f"Failed to generate obj module {module_number} after "
+                    f"{VIDEO_GENERATION_MAX_RETRIES + 1} attempts"
+                )
 
     finally:
-        grok_app.close_session(browser, session_log)
-        if p_context:
-            p_context.stop()
-        log.info(f"[obj_id: {story_id}] 👋 Browser session closed")
+        # Close the session that is currently active (may have been replaced on restart)
+        _close_video_session(session, story_id)
+
+    return generated_videos

@@ -1,0 +1,53 @@
+{
+  "job_id": "a3ffbc5c661b",
+  "pipeline_type": "objectvideo",
+  "created_at": "2026-04-09T19:04:12.743705+00:00",
+  "status": "done",
+  "stories": [
+    {
+      "id": null,
+      "story_id": null,
+      "title": "सब्जियाँ चिल्ला रही हैं — खा ले बेवकूफ!",
+      "description": "Potato, Tomato और Brinjal खुद बता रहे हैं कि तू सही तरीके से खाएगा तो body set, नहीं तो खुद बर्बाद करेगा।",
+      "tags": "health, food, vegetables, desi, nutrition, comedy",
+      "voiceover_main_prompt": null,
+      "voiceover_script": null,
+      "modules": [
+        {
+          "module_number": 1,
+          "video_generation_prompt": "The Potato character is a fully personified, furious version of itself — marching toward camera, pointing aggressively, SCREAMING its dialogue directly at the viewer. No humans. Camera: smash push-in. Character stomps and yells louder.\n\nओए सुन रे! मैं Potato हूँ, energy देता हूँ, पर तू मुझे तला हुआ खाता है, बेवकूफ, सही खा ले नहीं तो मोटापा बढ़ेगा, फिर रोता रहेगा गधे",
+          "voiceover": null,
+          "image_generation_prompt": "Pixar-style 3D render of a furious Potato character in a rustic kitchen environment, sitting among fresh vegetables, मिट्टी के कण still visible on its textured brown skin. The Potato has angry scrunched cartoon eyes, a tiny nose, small hands, one pointing aggressively toward viewer, and stubby legs planted wide. Warm yellow lighting from overhead lamp creates cozy yet intense contrast. Wooden cutting board, steel utensils, and मसाले surround the character. Cinematic low-angle shot makes Potato dominant and confrontational. Steam lightly rises in background from cooking pot. The Potato appears mid-scream, face intense, body leaning forward aggressively. Rich warm saturated Pixar colors highlight earthy textures. Slight motion blur on hands enhances energy. The character looks like it is yelling directly at viewer inside its natural kitchen habitat."
+        },
+        {
+          "module_number": 2,
+          "video_generation_prompt": "The Tomato character is a fully personified, furious version of itself — marching toward camera, pointing aggressively, SCREAMING its dialogue directly at the viewer. No humans. Camera: fast zoom-in. Character throws hands, then screams louder.\n\nओए साले! मैं Tomato हूँ, vitamins देता हूँ, तू मुझे ketchup बना के sugar भरता है, चुटिया, ऐसे खाएगा तो फायदा नहीं मिलेगा, समझ जा अभी",
+          "voiceover": null,
+          "image_generation_prompt": "Pixar-style 3D render of a furious Tomato character in a vibrant kitchen counter environment surrounded by chopped vegetables, मसाले, and splashes of tomato juice. The Tomato is bright red, glossy, with angry scrunched cartoon eyes, tiny nose, small hands, one pointing aggressively at viewer, stubby legs wide. Background shows cutting board with slices and splatter adding dynamic feel. Lighting is bright daylight from window, creating shiny reflections. Cinematic eye-level close-up emphasizes confrontation. Juicy textures glisten under light. The Tomato appears mid-scream, slightly bouncing with intensity. Rich saturated reds dominate scene. Motion blur on splashes adds action. The character looks like it is screaming directly at viewer from its natural kitchen prep space, full of chaos and flavor energy."
+        },
+        {
+          "module_number": 3,
+          "video_generation_prompt": "The Brinjal character is a fully personified, furious version of itself — marching toward camera, pointing aggressively, SCREAMING its dialogue directly at the viewer. No humans. Camera: dramatic push-in. Character slaps forehead, screams louder.\n\nओए हरामी! मैं Brinjal हूँ, fiber देता हूँ, तू मुझे तेल में डुबोता है, बेवकूफ, सही पकाएगा तो फायदा, नहीं तो खुद बीमार होगा समझा अभी",
+          "voiceover": null,
+          "image_generation_prompt": "Pixar-style 3D render of a furious Brinjal character in a traditional Indian kitchen setting, lying near fresh vegetables, मसाले bowls, and a kadai with light oil shimmer. The Brinjal is deep purple, glossy, with angry cartoon eyes, tiny nose, small hands, one pointing aggressively, stubby legs planted wide. Background shows wooden shelves and spice jars. Warm cooking light creates dramatic highlights on smooth surface. Cinematic low-angle shot enhances dominance. The Brinjal appears mid-scream, slightly leaning forward, expression furious. Oil shimmer reflects light but controlled, indicating balance. Rich purple tones pop against earthy kitchen textures. Slight steam and motion blur add realism. The character looks like it is yelling directly at viewer from its natural cooking environment."
+        },
+        {
+          "module_number": 4,
+          "video_generation_prompt": "All three characters are fully personified, furious versions of themselves — marching together toward camera, pointing aggressively, SCREAMING at the viewer. No humans. Camera: fast zoom-out then smash push-in. They shout together.\n\nओए गधों! हम Potato Tomato Brinjal हैं, सही खाएगा तो healthy रहेगा, बेवकूफ, गलत खाएगा तो खुद बर्बाद होगा, अब समझ जा और सुधर जा तुरंत",
+          "voiceover": null,
+          "image_generation_prompt": "Pixar-style 3D render showing Potato, Tomato, and Brinjal characters together in a lively kitchen environment filled with vegetables, मसाले, utensils, and warm lighting. All three stand in foreground with furious expressions, cartoon eyes scrunched, tiny noses, each pointing aggressively toward viewer with stubby legs planted wide. Background is vibrant with cooking elements, steam, and colorful ingredients. Cinematic wide shot slowly pushing in creates intensity. Lighting is warm and saturated, enhancing food textures. Slight movement in steam and objects adds dynamic energy. Characters appear mid-scream together, exaggerated expressions, confrontational poses. The scene feels alive and chaotic, representing kitchen reality. They look like they are screaming directly at viewer, demanding attention and action."
+        }
+      ]
+    }
+  ],
+  "progress": {
+    "None": {
+      "phase1_done": true,
+      "phase2_done": true,
+      "images_done": false,
+      "completed_modules": []
+    }
+  },
+  "started_at": "2026-04-09T19:13:46.172823+00:00",
+  "completed_at": "2026-04-09T19:24:35.173912+00:00"
+}
