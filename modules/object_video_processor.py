@@ -68,12 +68,6 @@ def generate_object_modules_sequentially(
 
     generated_videos = []
 
-    # Start the initial session
-    session = _start_video_session(story_id)
-    browser    = session["browser"]
-    page       = session["page"]
-    session_log = session["log"]
-
     try:
         for module in modules:
             module_number = module.get("module_number")
@@ -119,7 +113,14 @@ def generate_object_modules_sequentially(
                     f"🎬 Video generation attempt {attempt + 1}/{VIDEO_GENERATION_MAX_RETRIES + 1}"
                 )
 
+                session = None
                 try:
+                    # Start a FRESH session for EVERY attempt
+                    session      = _start_video_session(story_id)
+                    browser      = session["browser"]
+                    page         = session["page"]
+                    session_log  = session["log"]
+
                     # Ensure we are in video mode for every attempt
                     grok_app._stage_video_mode(page, session_log)
 
@@ -152,28 +153,17 @@ def generate_object_modules_sequentially(
                         raise RuntimeError(result.get("error"))
 
                 except GrokTimeoutError as e:
-                    # ── Hard timeout: close session, start fresh, retry ──────────
                     log.warning(
                         f"[obj_id: {story_id}] [module_number: {module_number}] "
                         f"⏰ Generation TIMED OUT (attempt {attempt + 1}): {e}"
                     )
-
-                    # Close the stale session
-                    _close_video_session(session, story_id)
-
                     if attempt < VIDEO_GENERATION_MAX_RETRIES:
                         log.info(
                             f"[obj_id: {story_id}] [module_number: {module_number}] "
-                            f"🔄 Restarting browser in {RESTART_WAIT_S}s and retrying …"
+                            f"🔄 Waiting {RESTART_WAIT_S}s before retrying with fresh browser …"
                         )
                         time.sleep(RESTART_WAIT_S)
-                        # Start a completely fresh session
-                        session      = _start_video_session(story_id)
-                        browser      = session["browser"]
-                        page         = session["page"]
-                        session_log  = session["log"]
                     attempt += 1
-                    continue
 
                 except Exception as e:
                     log.error(
@@ -187,6 +177,11 @@ def generate_object_modules_sequentially(
                         )
                         time.sleep(RESTART_WAIT_S)
                     attempt += 1
+                
+                finally:
+                    # ALWAYS close the session after each attempt
+                    if session:
+                        _close_video_session(session, story_id)
 
             if not success:
                 log.error(
@@ -199,7 +194,7 @@ def generate_object_modules_sequentially(
                 )
 
     finally:
-        # Close the session that is currently active (may have been replaced on restart)
-        _close_video_session(session, story_id)
+        # Final cleanup for the story (if needed)
+        pass
 
     return generated_videos
