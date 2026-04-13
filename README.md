@@ -32,7 +32,7 @@ Streams the MP4 file back directly in the HTTP response.
 
 ### 4. Process Full Story Sequential Pipeline
 `POST /api/process_payload`
-Generates all modules in a headless Chromium browser sequentially, merges the fragments, adds background audio, uploads the final MP4 to Cloudflare R2, and sends an n8n webhook notification.
+Generates all modules in a headless Google Chrome browser sequentially, merges the fragments, adds background audio, uploads the final MP4 to Cloudflare R2, and sends an n8n webhook notification.
 
 **Payload:**
 ```json

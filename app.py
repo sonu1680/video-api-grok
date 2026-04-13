@@ -146,13 +146,8 @@ def _stage_launch(p, log, user_data_dir=None):
     try:
         browser = p.chromium.launch_persistent_context(
             user_data_dir=user_data_dir,
-            executable_path="/usr/bin/google-chrome",
+            channel="chrome",
             headless=False,
-            user_agent=(
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                "AppleWebKit/537.36 (KHTML, like Gecko) "
-                "Chrome/121.0.0.0 Safari/537.36"
-            ),
             args=[
                 f"--profile-directory={PROFILE}",
                 "--disable-blink-features=AutomationControlled",
@@ -171,6 +166,10 @@ def _stage_navigate(browser, log):
     log.info("STAGE 2: Navigating to Grok")
 
     page = browser.pages[0] if browser.pages else browser.new_page()
+    
+    # Hide webdriver signature to bypass Cloudflare Turnstile
+    page.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+    
     page.bring_to_front()
 
     try:

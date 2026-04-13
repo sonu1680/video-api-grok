@@ -19,7 +19,7 @@ print("   This only needs to be done ONCE.\n")
 with sync_playwright() as p:
     browser = p.chromium.launch_persistent_context(
         user_data_dir=IMAGE_USER_DATA,
-        executable_path="/usr/bin/google-chrome",
+        channel="chrome",
         headless=False,
         args=[
             "--profile-directory=Default",
