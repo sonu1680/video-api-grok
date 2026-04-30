@@ -377,7 +377,6 @@ async def _run_objectvideo_pipeline(stories: list, job_id: str = None) -> None:
     """
     import datetime
     from modules.image_processor import generate_image_modules_sequentially
-    from modules.object_video_processor import generate_object_modules_sequentially
     from modules.video_merger import merge_videos
     from modules.video_uploader import upload_video_to_r2
     from modules.webhook_sender import send_n8n_webhook
@@ -424,11 +423,12 @@ async def _run_objectvideo_pipeline(stories: list, job_id: str = None) -> None:
                 log.info(f"[story_id: {current_story_id}] ✅ Phase 1 complete: {len(image_paths)} images")
 
                 # ── PHASE 2: Generate videos with uploaded images ─────────
-                log.info(f"[story_id: {current_story_id}] 🎬 Phase 2: Generating videos …")
+                log.info(f"[story_id: {current_story_id}] 🎬 Phase 2: Generating videos in PARALLEL …")
 
                 def _run_gen():
                     module_dicts = [m.dict() for m in modules]
-                    return generate_object_modules_sequentially(current_story_id, module_dicts, image_paths=image_paths)
+                    from modules.object_video_processor import generate_object_modules_parallel
+                    return generate_object_modules_parallel(current_story_id, module_dicts, image_paths=image_paths)
 
                 generated_video_paths = await loop.run_in_executor(None, _run_gen)
 

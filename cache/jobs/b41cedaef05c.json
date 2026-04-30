@@ -2,7 +2,7 @@
   "job_id": "b41cedaef05c",
   "pipeline_type": "objectvideo",
   "created_at": "2026-04-30T17:18:49.421699+00:00",
-  "status": "running",
+  "status": "done",
   "stories": [
     {
       "id": 1,
@@ -59,10 +59,11 @@
   "progress": {
     "1": {
       "phase1_done": true,
-      "phase2_done": false,
+      "phase2_done": true,
       "images_done": false,
       "completed_modules": []
     }
   },
-  "started_at": "2026-04-30T17:22:41.086922+00:00"
+  "started_at": "2026-04-30T17:48:52.530699+00:00",
+  "completed_at": "2026-04-30T17:54:12.368475+00:00"
 }

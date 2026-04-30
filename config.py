@@ -10,6 +10,11 @@ IMAGES_DIR.mkdir(exist_ok=True)
 
 # Application Context
 IMAGE_PATH = str(BASE_DIR / "default.jpg") # Default static image path if needed
+VIDEO_PROFILES = [
+    os.path.expanduser("~/.config/google-chrome-bot-profile-1"),
+    os.path.expanduser("~/.config/google-chrome-bot-profile-2"),
+    os.path.expanduser("~/.config/google-chrome-bot-profile-3")
+]
 
 # R2 Bucket Credentials
 R2_ACCESS_KEY = "233810c82d9efd1375a5c9151bd88468"
