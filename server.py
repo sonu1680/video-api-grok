@@ -93,6 +93,8 @@ async def lifespan(app: FastAPI):
                 log.warning(f"  ⚠️ Unknown pipeline type '{pipeline_type}' for job {job_id}")
     else:
         log.info("✅ No pending jobs to resume.")
+        # If no pending jobs on startup, check the webhook
+        asyncio.create_task(_trigger_next_job_if_idle())
 
     yield
     log.info("👋 GrokAPI server shutting down.")
@@ -495,6 +497,49 @@ async def _run_objectvideo_pipeline(stories: list, job_id: str = None) -> None:
         if job and job.get("status") not in ("failed",):
             JobPersistence.mark_done(job_id)
 
+    # ── Check for more jobs after completion ────────────────────────────────
+    asyncio.create_task(_trigger_next_job_if_idle())
+
+
+async def _trigger_next_job_if_idle():
+    """
+    Checks if there are any pending jobs in the cache. 
+    If not, polls the n8n webhook for new work.
+    """
+    from modules.job_fetcher import fetch_new_jobs
+    
+    pending = JobPersistence.list_pending()
+    if pending:
+        # Check if any are 'pending' but NOT 'running' (might happen if triggered multiple times)
+        running_count = sum(1 for j in pending if j.get("status") == "running")
+        if running_count > 0:
+            log.info(f"Worker: {running_count} job(s) currently running. Skipping webhook poll.")
+            return
+
+    log.info("Worker: Queue is empty or idle. Fetching new jobs from webhook...")
+    loop = asyncio.get_event_loop()
+    stories_raw = await loop.run_in_executor(None, fetch_new_jobs)
+    
+    if stories_raw:
+        # Convert to StoryPayload objects
+        story_objs = []
+        for s in stories_raw:
+            try:
+                story_objs.append(StoryPayload(**s))
+            except Exception as e:
+                log.warning(f"Worker: Failed to parse story from webhook: {e}")
+        
+        if story_objs:
+            # Create a new job in the cache
+            job_id = JobPersistence.create("objectvideo", stories_raw)
+            log.info(f"Worker: Starting new job {job_id} with {len(story_objs)} stories.")
+            # Trigger the pipeline in the background
+            asyncio.create_task(_run_objectvideo_pipeline(story_objs, job_id=job_id))
+        else:
+            log.warning("Worker: Webhook returned data but no valid stories were parsed.")
+    else:
+        log.info("Worker: No new jobs found at webhook.")
+
 
 @app.post(
     "/api/generate_images",
@@ -561,6 +606,9 @@ async def _run_image_pipeline(stories: list, job_id: str = None) -> None:
         job = JobPersistence.load(job_id)
         if job and job.get("status") not in ("failed",):
             JobPersistence.mark_done(job_id)
+
+    # ── Check for more jobs after completion ────────────────────────────────
+    asyncio.create_task(_trigger_next_job_if_idle())
 
 
 async def _handle_generation(prompt: str, background_tasks: BackgroundTasks) -> FileResponse:
