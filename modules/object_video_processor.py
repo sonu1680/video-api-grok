@@ -91,7 +91,7 @@ def generate_object_modules_parallel(
         if not isinstance(image_prompt, str):
             image_prompt = json.dumps(image_prompt, ensure_ascii=False, indent=2)
 
-        output_video_filename = f"module_{module_number}.mp4"
+        output_video_filename = f"module_{story_id}_{module_number}.mp4"
         output_video_path     = str(VIDEOS_DIR / output_video_filename)
 
         # ── Resume / Skip Logic ────────────────────────────────────────────
@@ -222,10 +222,10 @@ def generate_object_modules_parallel(
             except Exception as e:
                 log.error(f"[obj_id: {story_id}] ❌ Error in parallel execution: {e}")
 
-    # Sort the list of video paths by module number (extracted from filename like 'module_1.mp4')
+    # Sort the list of video paths by module number (extracted from filename like 'module_123_1.mp4')
     # to ensure the final merge is in the correct sequence.
     try:
-        generated_videos.sort(key=lambda x: int(x.name.split('_')[1].split('.')[0]))
+        generated_videos.sort(key=lambda x: int(x.stem.split('_')[-1]))
         log.info(f"[obj_id: {story_id}] 📊 Sorted {len(generated_videos)} modules in correct sequence")
     except Exception as e:
         log.warning(f"[obj_id: {story_id}] ⚠️ Failed to sort modules automatically: {e}")

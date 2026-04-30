@@ -96,6 +96,16 @@ async def lifespan(app: FastAPI):
         # If no pending jobs on startup, check the webhook
         asyncio.create_task(_trigger_next_job_if_idle())
 
+    async def _polling_loop():
+        """Continuously polls for new jobs every 5 minutes."""
+        while True:
+            await asyncio.sleep(300)  # 5 minutes
+            log.info("⏰ 5-minute interval reached. Checking for new jobs...")
+            await _trigger_next_job_if_idle()
+
+    # Start the continuous 5-minute polling loop
+    asyncio.create_task(_polling_loop())
+
     yield
     log.info("👋 GrokAPI server shutting down.")
 
@@ -162,7 +172,7 @@ async def _run_generation(prompt: str) -> str:
     async with _chrome_lock:
         log.info(f"[{job_id}] Starting …")
         _pending_jobs[job_id]["status"] = "running"
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         try:
             # generate_video is synchronous – run in thread pool
             result = await loop.run_in_executor(None, grok_app.generate_video, prompt, IMAGE_PATH, output_path)
@@ -205,7 +215,7 @@ async def _process_payload_sequentially(payload: Union[TestPayload, List[StoryPa
         
         async with _chrome_lock:
             # We hold the lock for the entire story so the browser session is isolated.
-            loop = asyncio.get_event_loop()
+            loop = asyncio.get_running_loop()
             
             try:
                 # 1. Generate Videos
@@ -389,7 +399,7 @@ async def _run_objectvideo_pipeline(stories: list, job_id: str = None) -> None:
         modules = sorted(story.modules, key=lambda m: m.module_number)
         
         async with _chrome_lock:
-            loop = asyncio.get_event_loop()
+            loop = asyncio.get_running_loop()
             try:
                 # ── PHASE 1: Generate images for all modules ─────────────────
                 # Check if Phase 1 was already completed (resume case)
@@ -510,14 +520,11 @@ async def _trigger_next_job_if_idle():
     
     pending = JobPersistence.list_pending()
     if pending:
-        # Check if any are 'pending' but NOT 'running' (might happen if triggered multiple times)
-        running_count = sum(1 for j in pending if j.get("status") == "running")
-        if running_count > 0:
-            log.info(f"Worker: {running_count} job(s) currently running. Skipping webhook poll.")
-            return
+        log.info(f"Worker: {len(pending)} job(s) currently in queue (pending/running). Skipping webhook poll.")
+        return
 
     log.info("Worker: Queue is empty or idle. Fetching new jobs from webhook...")
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
     stories_raw = await loop.run_in_executor(None, fetch_new_jobs)
     
     if stories_raw:
@@ -580,7 +587,7 @@ async def _run_image_pipeline(stories: list, job_id: str = None) -> None:
         modules = sorted(story.modules, key=lambda m: m.module_number)
 
         async with _chrome_lock:
-            loop = asyncio.get_event_loop()
+            loop = asyncio.get_running_loop()
             try:
                 # Generate images sequentially
                 def _run_gen():

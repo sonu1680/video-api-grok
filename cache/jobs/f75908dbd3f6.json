@@ -1,0 +1,69 @@
+{
+  "job_id": "f75908dbd3f6",
+  "pipeline_type": "objectvideo",
+  "created_at": "2026-04-30T18:21:33.373644+00:00",
+  "status": "done",
+  "stories": [
+    {
+      "id": 1,
+      "title": "Alarm Clock Roasts Your Life",
+      "description": "Stop snoozing your success",
+      "tags": "funny roast,alarm clock,snooze,life roast,comedy",
+      "duration": "30s",
+      "persona": "Standup Comedian",
+      "modules": [
+        {
+          "module_number": 1,
+          "time": "0-10s",
+          "image_generation_prompt": "A cute alarm clock puppet made of real metal and plastic textures stands on a comedy club stage with a brick wall, neon sign, spotlight beam, mic stand, and audience silhouettes. The clock has large glossy expressive eyes on its dial, a tiny nose bump, a speaking mouth integrated into the clock face, small stubby arms with four-fingered hands, and short legs. It leans forward pointing at the audience with attitude, one hand gripping a mic stand. Warm spotlight highlights it dramatically. Camera uses Dramatic Snap Zoom. Shot on a 50mm f/1.4 lens, 100% real photograph, real textures, no CGI, no animation, no illustration, no 3D render, real-world lighting, camera raw style, 9:16 vertical, no text.",
+          "video_generation_prompt": "ACTIONS: LEAP_IN + POINT_AT_CAM + MIC_DROP | CAMERA: Dramatic Snap Zoom | EXPRESSION: sarcastic grin, raised eyebrow | DIALOGUE: ओए आलसी इंसान! मैं अलार्म घड़ी हूँ — रोज़ तुझे जगाने आता हूँ, और तू मुझे snooze करके अपनी लाइफ़ भी snooze कर देता है! उठना नहीं, बस बहाने बनाना है ना? | LIP-SYNC: tight sync markers | PACING: Fast reel energy | Duration: 8s | DIALOGUE END TIME: 7.8s | WORD COUNT: ~32 | AUDIO: dry studio vocal, no music, no ambient sound, high clarity, fast-paced delivery."
+        },
+        {
+          "module_number": 2,
+          "time": "10-20s",
+          "image_generation_prompt": "A cute alarm clock puppet with realistic metal texture stands on the same comedy club stage with warm lighting. It gestures like a standup comedian teaching the audience, holding the mic with one hand and raising a finger with the other. The character has expressive eyes, moving mouth, tiny nose, arms gesturing confidently, and small legs planted on wooden stage. Background includes blurred audience silhouettes and neon sign glow. Camera uses Gentle Side Dolly for smooth movement. Shot on a 50mm f/1.4 lens, 100% real photograph, real textures, no CGI, no animation, no illustration, no 3D render, real-world lighting, camera raw style, 9:16 vertical, no text.",
+          "video_generation_prompt": "ACTIONS: RAISE_FINGER + NOD_TEACH + SHOW_PALMS | CAMERA: Gentle Side Dolly | EXPRESSION: smug teaching smile | DIALOGUE: देख, मैं तेरी मदद करने आता हूँ — सुबह उठ, दिमाग फ्रेश, दिन सेट! लेकिन तू क्या करता है? snooze पे snooze! रिसर्च बोलती है कि बार-बार snooze करने से ब्रेन और ज़्यादा सुस्त हो जाता है, और तू फिर भी हीरो बन रहा है! | LIP-SYNC: precise markers | PACING: Dense teacher | Duration: 10s | DIALOGUE END TIME: 9.9s | WORD COUNT: ~44 | AUDIO: dry studio vocal, no music, no ambient sound, high clarity, fast-paced delivery."
+        },
+        {
+          "module_number": 3,
+          "time": "20-30s",
+          "image_generation_prompt": "A cute alarm clock puppet on the same comedy club stage with slightly cooler lighting, leaning forward seriously near the mic stand, then transitioning into a friendly wave. The clock character has expressive eyes narrowing then softening, a moving mouth, arms signaling warning and then warmth, and short legs steady on stage. The background shows brick wall, spotlight, and audience silhouettes. Camera uses Slow Intimate Push-in for dramatic emphasis. Shot on a 50mm f/1.4 lens, 100% real photograph, real textures, no CGI, no animation, no illustration, no 3D render, real-world lighting, camera raw style, 9:16 vertical, no text.",
+          "video_generation_prompt": "ACTIONS: STOP_HAND + WAG_FINGER + WARM_WAVE | CAMERA: Slow Intimate Push-in | EXPRESSION: serious then playful grin | DIALOGUE: अब सुन, अगर ऐसे ही snooze करता रहा, तो तेरी लाइफ़ भी snooze हो जाएगी — मौके निकल जाएंगे और तू सोता रहेगा! उठ जा भाई! और अगर ये roast सही लगा, तो फॉलो कर — मैं रोज़ तेरी नींद उड़ाऊँगा! | LIP-SYNC: accurate sync | PACING: Urgent then warm | Duration: 10s | DIALOGUE END TIME: 9.9s | WORD COUNT: ~45 | AUDIO: dry studio vocal, no music, no ambient sound, high clarity, fast-paced delivery."
+        }
+      ],
+      "canvas_layout": [
+        {
+          "module": 1,
+          "thumbnail_description": "Alarm clock roasting lazy user",
+          "dialogue_preview": "ओए आलसी इंसान! मैं अलार्म",
+          "start": "0s",
+          "end": "10s"
+        },
+        {
+          "module": 2,
+          "thumbnail_description": "Explaining snooze effect",
+          "dialogue_preview": "देख, मैं तेरी मदद",
+          "start": "10s",
+          "end": "20s"
+        },
+        {
+          "module": 3,
+          "thumbnail_description": "Warning and follow CTA",
+          "dialogue_preview": "अब सुन, अगर ऐसे",
+          "start": "20s",
+          "end": "30s"
+        }
+      ]
+    }
+  ],
+  "progress": {
+    "1": {
+      "phase1_done": true,
+      "phase2_done": true,
+      "images_done": false,
+      "completed_modules": []
+    }
+  },
+  "started_at": "2026-04-30T18:21:33.433473+00:00",
+  "completed_at": "2026-04-30T18:27:05.004536+00:00"
+}

@@ -1,0 +1,68 @@
+{
+  "job_id": "19944f553fd7",
+  "pipeline_type": "objectvideo",
+  "created_at": "2026-04-30T18:31:33.342573+00:00",
+  "status": "running",
+  "stories": [
+    {
+      "id": 1,
+      "title": "Black Pepper Boosts Power 2000%",
+      "description": "Tiny spice, massive absorption hack",
+      "tags": "black pepper,science fact,piperine,absorption,health hack",
+      "duration": "30s",
+      "persona": "Hyper Cheerleader",
+      "modules": [
+        {
+          "module_number": 1,
+          "time": "0-10s",
+          "image_generation_prompt": "A cute black pepper seed puppet made of real textured wrinkled black pepper surface stands energetically on a bright sunny rooftop gym setting. The character has large glossy expressive eyes, a tiny bump nose, a speaking mouth carved into the pepper texture, small stubby arms with four-fingered hands, and short sturdy legs. It jumps excitedly near dumbbells and a jump box, blue sky behind. It points at camera with hype energy. Lighting is bright sunlight with sharp shadows. Camera uses Whip Pan Entry for high energy. Shot on a 50mm f/1.4 lens, 100% real photograph, real textures, no CGI, no animation, no illustration, no 3D render, real-world lighting, camera raw style, 9:16 vertical, no text.",
+          "video_generation_prompt": "ACTIONS: LEAP_IN + POINT_AT_CAM + HAPPY_BOUNCE | CAMERA: Whip Pan Entry | EXPRESSION: super excited wide eyes, big grin | DIALOGUE: हाँ भाई! काली मिर्च आ गई! छोटा सा दाना, लेकिन पावर फुल ऑन! जानता है? मैं तेरे खाने की ताक़त 2000% तक बढ़ा सकता हूँ! अबे ध्यान दे, ये मज़ाक नहीं है! | LIP-SYNC: tight sync markers | PACING: Fast reel energy | Duration: 8s | DIALOGUE END TIME: 7.8s | WORD COUNT: ~33 | AUDIO: dry studio vocal, no music, no ambient sound, high clarity, fast-paced delivery."
+        },
+        {
+          "module_number": 2,
+          "time": "10-20s",
+          "image_generation_prompt": "A cute black pepper puppet with realistic wrinkled surface stands on the same rooftop gym with warm sunlight. It gestures like an energetic coach, holding a tiny glowing orb symbolizing nutrients. The puppet has big shiny eyes, tiny nose, expressive mouth mid-speech, arms moving energetically, legs grounded. Background includes dumbbells, skyline, and sunlight flare. Camera uses Gentle Side Dolly for smooth motion. Shot on a 50mm f/1.4 lens, 100% real photograph, real textures, no CGI, no animation, no illustration, no 3D render, real-world lighting, camera raw style, 9:16 vertical, no text.",
+          "video_generation_prompt": "ACTIONS: HOLD_ORB + RAISE_FINGER + NOD_TEACH | CAMERA: Gentle Side Dolly | EXPRESSION: confident energetic smile | DIALOGUE: सुन, मेरे अंदर पाइपरीन है — ये ऐसा कंपाउंड है जो हल्दी के करक्यूमिन जैसे न्यूट्रिएंट्स की एब्जॉर्प्शन 2000% तक बढ़ा देता है! मतलब जो खा रहा है, वो असली फायदा देगा! रिसर्च भी यही बोलती है! | LIP-SYNC: precise markers | PACING: Dense teacher | Duration: 10s | DIALOGUE END TIME: 9.9s | WORD COUNT: ~43 | AUDIO: dry studio vocal, no music, no ambient sound, high clarity, fast-paced delivery."
+        },
+        {
+          "module_number": 3,
+          "time": "20-30s",
+          "image_generation_prompt": "A realistic black pepper puppet stands on the same rooftop gym but lighting shifts slightly cooler then warm. The character leans forward with serious eyes, then smiles warmly. Arms first raise in warning, then open in encouragement. Background still shows rooftop, sky, and gym props. Camera uses Slow Intimate Push-in for intensity. Shot on a 50mm f/1.4 lens, 100% real photograph, real textures, no CGI, no animation, no illustration, no 3D render, real-world lighting, camera raw style, 9:16 vertical, no text.",
+          "video_generation_prompt": "ACTIONS: STOP_HAND + LEAN_IN + WARM_WAVE | CAMERA: Slow Intimate Push-in | EXPRESSION: serious then cheerful smile | DIALOGUE: लेकिन! ज़्यादा काली मिर्च खाएगा तो पेट में जलन और इरिटेशन हो सकता है! समझदारी से यूज़ कर! थोड़ा डाल, बड़ा फायदा ले! और अगर ये हैक पसंद आया, तो फॉलो कर — और भी पावर टिप्स दूँगा! | LIP-SYNC: accurate sync | PACING: Urgent then warm | Duration: 10s | DIALOGUE END TIME: 9.9s | WORD COUNT: ~45 | AUDIO: dry studio vocal, no music, no ambient sound, high clarity, fast-paced delivery."
+        }
+      ],
+      "canvas_layout": [
+        {
+          "module": 1,
+          "thumbnail_description": "Black pepper hype entry rooftop",
+          "dialogue_preview": "हाँ भाई! काली मिर्च आ गई",
+          "start": "0s",
+          "end": "10s"
+        },
+        {
+          "module": 2,
+          "thumbnail_description": "Explaining piperine boost",
+          "dialogue_preview": "मेरे अंदर पाइपरीन है",
+          "start": "10s",
+          "end": "20s"
+        },
+        {
+          "module": 3,
+          "thumbnail_description": "Warning and CTA",
+          "dialogue_preview": "लेकिन! ज़्यादा काली",
+          "start": "20s",
+          "end": "30s"
+        }
+      ]
+    }
+  ],
+  "progress": {
+    "1": {
+      "phase1_done": false,
+      "phase2_done": false,
+      "images_done": false,
+      "completed_modules": []
+    }
+  },
+  "started_at": "2026-04-30T18:31:33.343187+00:00"
+}
