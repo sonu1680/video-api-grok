@@ -36,3 +36,4 @@ images/
 *.png
 ai-grok-video-generation-automation.py*.json
 ai-video-generator-*.json
+cache/jobs

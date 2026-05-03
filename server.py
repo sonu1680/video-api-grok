@@ -152,6 +152,9 @@ class StoryPayload(BaseModel):
 class TestPayload(BaseModel):
     stories: List[StoryPayload]
 
+class ScrapeMyntraRequest(BaseModel):
+    url: str
+
 
 # ─────────────────────────── HELPERS ──────────────────────────────────────────
 
@@ -570,6 +573,53 @@ async def api_generate_images(payload: Union[TestPayload, List[StoryPayload]], b
         status_code=202,
         content={"status": "processing", "job_id": job_id, "message": "Image generation started in the background."}
     )
+
+@app.post(
+    "/api/scrape_myntra",
+    summary="Scrape product images from a Myntra URL",
+    response_description="List of local file paths for the downloaded images",
+)
+async def api_scrape_myntra(body: ScrapeMyntraRequest, background_tasks: BackgroundTasks):
+    """
+    **Example:**
+    ```json
+    POST /api/scrape_myntra
+    {"url": "https://www.myntra.com/kurtas/kalini/kalini-ethnic-motifs-printed-mandarin-collar-straight-kurta/28375886/buy"}
+    ```
+    """
+    url = body.url.strip()
+    if not url:
+        raise HTTPException(status_code=422, detail="URL cannot be empty.")
+    
+    if "myntra.com" not in url:
+        raise HTTPException(status_code=422, detail="Only myntra.com URLs are supported.")
+
+    log.info(f"🛒 New Myntra scraping request → URL: {url}")
+    
+    try:
+        from modules.myntra_scraper import scrape_myntra_images, extract_product_id
+        from modules.myntra_processor import process_myntra_images_with_grok
+        
+        loop = asyncio.get_running_loop()
+        # Run scraper in thread pool to avoid blocking the event loop
+        local_paths = await loop.run_in_executor(None, scrape_myntra_images, url)
+        
+        if local_paths:
+            product_id = extract_product_id(url)
+            # Run processing in thread pool using background tasks
+            def _run_processing():
+                process_myntra_images_with_grok(product_id, local_paths)
+            background_tasks.add_task(_run_processing)
+        
+        return JSONResponse({
+            "status": "success",
+            "images_downloaded": len(local_paths),
+            "paths": local_paths,
+            "message": "Scraping complete. Image processing started in the background."
+        })
+    except Exception as e:
+        log.error(f"❌ Scraping failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Scraping failed: {e}")
 
 async def _run_image_pipeline(stories: list, job_id: str = None) -> None:
     """

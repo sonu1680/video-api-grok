@@ -16,6 +16,15 @@ def merge_videos(story_id: str, video_paths: List[Path], voiceover_path: Path = 
     if not video_paths:
         raise ValueError("No video paths provided for merging.")
         
+    # --- Trimming Stage ---
+    from modules.video_trimmer import detect_last_dialogue_end, trim_video_to_timestamp
+    trimmed_video_paths = []
+    for idx, vp in enumerate(video_paths):
+        log.info(f"[story_id: {story_id}] 🔍 Analyzing module {idx+1} for silent tail: {vp.name}")
+        trim_point = detect_last_dialogue_end(vp)
+        trimmed_vp = trim_video_to_timestamp(vp, trim_point)
+        trimmed_video_paths.append(trimmed_vp)
+        
     concat_file = VIDEOS_DIR / f"concat_{story_id}.txt"
     bg_audio_path = BASE_DIR / "bg.mp3"
     
@@ -30,7 +39,7 @@ def merge_videos(story_id: str, video_paths: List[Path], voiceover_path: Path = 
     try:
         # Write concat list
         with open(concat_file, "w") as f:
-            for vp in video_paths:
+            for vp in trimmed_video_paths:
                 f.write(f"file '{vp.absolute()}'\n")
                 
         log.info(f"[story_id: {story_id}] 🎬 Merging {len(video_paths)} videos into {base_merged_output.name}")
