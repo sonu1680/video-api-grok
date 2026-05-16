@@ -25,6 +25,7 @@ R2_BUCKET_NAME = "ai-videos"
 # Webhook Config
 N8N_WEBHOOK_URL = "https://n8n.sonupandit.in/webhook/f399fe7e-c65b-4dd1-b848-0f4d50b569d4"
 N8N_JOB_FETCH_URL = "https://n8n.sonupandit.in/webhook/df5a2f10-c375-4d79-90d6-c0f79c52e6f1"
+CHATGPT_JOB_FETCH_URL = "https://n8n.sonupandit.in/webhook/df5a2f10-c375-4d79-90d6-c0f79c52e6f2"
 VIDEO_PUBLIC_DOMAIN = "https://cdn.sonupandit.in"
 
 

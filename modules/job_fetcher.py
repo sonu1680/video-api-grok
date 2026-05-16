@@ -51,6 +51,65 @@ def fetch_new_jobs(url: Optional[str] = None) -> List[Dict[str, Any]]:
         
     return []
 
+def fetch_chatgpt_jobs(url: Optional[str] = None) -> int:
+    """
+    Polls the ChatGPT webhook URL.
+    Returns the number of generations requested (count).
+    """
+    from config import CHATGPT_JOB_FETCH_URL
+    target_url = url or CHATGPT_JOB_FETCH_URL
+    log.info(f"📡 Polling ChatGPT webhook: {target_url}")
+    
+    try:
+        response = requests.get(target_url, timeout=30)
+        
+        if response.status_code == 200:
+            try:
+                data = response.json()
+                
+                # Check for explicit count
+                if isinstance(data, dict):
+                    if "count" in data:
+                        count = int(data["count"])
+                        log.info(f"✅ Found ChatGPT job count: {count}")
+                        return count
+                    
+                    # Handle n8n standard result wrapper
+                    if "result" in data and data["result"]:
+                        inner_data = data["result"]
+                        if isinstance(inner_data, str):
+                            inner_data = json.loads(inner_data)
+                            
+                        # If it's a list, return its length
+                        if isinstance(inner_data, list):
+                            log.info(f"✅ Found ChatGPT list, count: {len(inner_data)}")
+                            return len(inner_data)
+                            
+                        # Check for count inside result
+                        if isinstance(inner_data, dict) and "count" in inner_data:
+                            return int(inner_data["count"])
+                            
+                        # Check for data wrapper
+                        if "data" in inner_data and isinstance(inner_data["data"], list):
+                            return len(inner_data["data"])
+                            
+                # If no strict match is found, return 0 instead of falling back to 1
+                log.warning("⚠️ ChatGPT Webhook returned success, but no explicit count or valid data array was found.")
+                return 0
+                    
+            except (json.JSONDecodeError, AttributeError, ValueError) as e:
+                log.error(f"❌ Failed to parse ChatGPT webhook JSON: {e}")
+                
+        elif response.status_code == 204:
+            log.info("ℹ️ ChatGPT Webhook returned 204 (No Content).")
+        else:
+            log.warning(f"⚠️ ChatGPT Webhook returned status {response.status_code}")
+            
+    except Exception as e:
+        log.error(f"❌ Error polling ChatGPT webhook: {e}")
+        
+    return 0
+
 if __name__ == "__main__":
     # Quick debug test
     logging.basicConfig(level=logging.INFO)

@@ -9,7 +9,7 @@ Job files are stored as JSON in cache/jobs/<job_id>.json
 Structure of a job file:
 {
     "job_id": "...",
-    "pipeline_type": "objectvideo" | "generate_images",
+    "pipeline_type": "objectvideo" | "generate_images" | "chatgpt_generation",
     "created_at": "ISO8601",
     "status": "pending" | "running" | "done" | "failed",
     "stories": [ <serialised story dicts> ],

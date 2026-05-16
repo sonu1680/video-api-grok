@@ -28,6 +28,7 @@ import app as grok_app
 
 # Import job persistence
 from cache.job_persistence import JobPersistence
+import chatgpt_visitor
 
 # ─────────────────────────── CONFIG ───────────────────────────────────────────
 
@@ -71,6 +72,11 @@ async def lifespan(app: FastAPI):
             pipeline_type = job["pipeline_type"]
             stories_raw   = job["stories"]
 
+            if pipeline_type == "chatgpt_generation":
+                log.info(f"  ▶ Resuming job {job_id} ({pipeline_type}) with {len(stories_raw)} runs")
+                asyncio.create_task(_run_chatgpt_pipeline(stories_raw, job_id=job_id))
+                continue
+
             # Reconstruct story Pydantic objects from raw dicts
             story_objs = []
             for s in stories_raw:
@@ -93,18 +99,27 @@ async def lifespan(app: FastAPI):
                 log.warning(f"  ⚠️ Unknown pipeline type '{pipeline_type}' for job {job_id}")
     else:
         log.info("✅ No pending jobs to resume.")
-        # If no pending jobs on startup, check the webhook
+        # If no pending jobs on startup, check the webhooks
         asyncio.create_task(_trigger_next_job_if_idle())
+        asyncio.create_task(_trigger_chatgpt_job_if_idle())
 
     async def _polling_loop():
-        """Continuously polls for new jobs every 5 minutes."""
+        """Continuously polls for new video jobs every 5 minutes."""
         while True:
             await asyncio.sleep(300)  # 5 minutes
-            log.info("⏰ 5-minute interval reached. Checking for new jobs...")
+            log.info("⏰ 5-minute interval reached. Checking for new video jobs...")
             await _trigger_next_job_if_idle()
 
-    # Start the continuous 5-minute polling loop
+    async def _chatgpt_polling_loop():
+        """Continuously polls for new ChatGPT jobs every 1 hour."""
+        while True:
+            await asyncio.sleep(3600)  # 1 hour
+            log.info("⏰ 1-hour interval reached. Checking for new ChatGPT jobs...")
+            await _trigger_chatgpt_job_if_idle()
+
+    # Start the continuous polling loops
     asyncio.create_task(_polling_loop())
+    asyncio.create_task(_chatgpt_polling_loop())
 
     yield
     log.info("👋 GrokAPI server shutting down.")
@@ -154,6 +169,9 @@ class TestPayload(BaseModel):
 
 class ScrapeMyntraRequest(BaseModel):
     url: str
+
+class ChatgptRequest(BaseModel):
+    count: int = 1
 
 
 # ─────────────────────────── HELPERS ──────────────────────────────────────────
@@ -668,6 +686,88 @@ async def _run_image_pipeline(stories: list, job_id: str = None) -> None:
     asyncio.create_task(_trigger_next_job_if_idle())
 
 
+    # Check for more jobs after completion
+    asyncio.create_task(_trigger_next_job_if_idle())
+
+
+async def _trigger_chatgpt_job_if_idle():
+    """
+    Checks if there are any pending ChatGPT jobs in the cache. 
+    If not, polls the n8n webhook for new ChatGPT work.
+    """
+    from modules.job_fetcher import fetch_chatgpt_jobs
+    
+    pending = JobPersistence.list_pending()
+    if any(job.get("pipeline_type") == "chatgpt_generation" for job in pending):
+        log.info("Worker: ChatGPT job already in queue. Skipping webhook poll.")
+        return
+
+    log.info("Worker: Checking ChatGPT webhook...")
+    loop = asyncio.get_running_loop()
+    count = await loop.run_in_executor(None, fetch_chatgpt_jobs, None)
+    
+    if count > 0:
+        # Create dummy tasks to represent the count, using story_id so JobPersistence can track them
+        stories_raw = [{"story_id": str(i)} for i in range(count)]
+        job_id = JobPersistence.create("chatgpt_generation", stories_raw)
+        log.info(f"Worker: Starting new ChatGPT job {job_id} for {count} runs.")
+        asyncio.create_task(_run_chatgpt_pipeline(stories_raw, job_id=job_id))
+    else:
+        log.info("Worker: No new ChatGPT jobs found at webhook.")
+
+async def _run_chatgpt_pipeline(stories: list, job_id: str = None) -> None:
+    """Run ChatGPT generation 'count' times sequentially with persistence."""
+    if job_id:
+        JobPersistence.mark_running(job_id)
+
+    count = len(stories)
+    for i in range(count):
+        story_id = str(i)
+        
+        # Check if this specific run was already completed before a crash
+        prog = JobPersistence.get_progress(job_id, story_id) if job_id else {}
+        if prog.get("phase1_done"):
+            log.info(f"⏭️ [ChatGPT Job {job_id}] Run {i+1} already completed. Skipping...")
+            continue
+            
+        log.info(f"🤖 [ChatGPT Job {job_id}] Starting run {i+1} of {count}...")
+        async with _chrome_lock:
+            try:
+                success = await chatgpt_visitor.run_chatgpt_generation()
+                if success:
+                    log.info(f"🤖 [ChatGPT Job {job_id}] Run {i+1} completed successfully.")
+                    if job_id:
+                        JobPersistence.update_progress(job_id, story_id, phase1_done=True)
+                else:
+                    log.warning(f"🤖 [ChatGPT Job {job_id}] Run {i+1} failed.")
+            except Exception as e:
+                log.error(f"🤖 [ChatGPT Job {job_id}] Error in run {i+1}: {e}")
+        
+        # Small cooldown between runs
+        if i < count - 1:
+            await asyncio.sleep(5)
+    
+    if job_id:
+        # Before marking done, check if all are actually done
+        all_done = True
+        for i in range(count):
+            if not JobPersistence.get_progress(job_id, str(i)).get("phase1_done"):
+                all_done = False
+                break
+        
+        if all_done:
+            JobPersistence.mark_done(job_id)
+            log.info(f"🤖 [ChatGPT Job {job_id}] All {count} runs finished.")
+        else:
+            JobPersistence.mark_failed(job_id, "Not all runs completed successfully")
+            log.warning(f"🤖 [ChatGPT Job {job_id}] Finished, but some runs failed.")
+    else:
+        log.info(f"🤖 [ChatGPT All {count} runs finished (no persistence).")
+    
+    # Check for more jobs after completion
+    asyncio.create_task(_trigger_chatgpt_job_if_idle())
+
+
 async def _handle_generation(prompt: str, background_tasks: BackgroundTasks) -> FileResponse:
     prompt = prompt.strip()
     if not prompt:
@@ -766,3 +866,22 @@ async def test_merge(payload: MergeTestPayload, background_tasks: BackgroundTask
             
     background_tasks.add_task(_run_test)
     return JSONResponse({"status": "queued", "message": "Merge test triggered."})
+
+@app.post("/api/chatgpt_generate", summary="Trigger ChatGPT generation multi-step interaction")
+async def api_chatgpt_generate(body: ChatgptRequest, background_tasks: BackgroundTasks):
+    """
+    Triggers the ChatGPT automation script (next -> random choices -> yes -> allow).
+    The 'count' parameter specifies how many times to repeat the interaction.
+    """
+    log.info(f"🤖 New ChatGPT generation request → count: {body.count}")
+    
+    # Create persistent job using story_id
+    stories_raw = [{"story_id": str(i)} for i in range(body.count)]
+    job_id = JobPersistence.create("chatgpt_generation", stories_raw)
+    
+    background_tasks.add_task(_run_chatgpt_pipeline, stories_raw, job_id)
+    return JSONResponse({
+        "status": "processing",
+        "job_id": job_id,
+        "message": f"ChatGPT generation job {job_id} started in background for {body.count} runs."
+    })

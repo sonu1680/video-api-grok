@@ -1,4 +1,4 @@
-.PHONY: dev clean
+.PHONY: dev clean visit-chatgpt
 
 dev:
 	uvicorn server:app --host 0.0.0.0 --port 8000 --reload
@@ -8,3 +8,6 @@ clean:
 	@find . -type d -name "__pycache__" -exec rm -rf {} +
 	@rm -f videos/*.mp4
 	@echo "Cleanup complete."
+
+gpt:
+	python3 chatgpt_visitor.py
