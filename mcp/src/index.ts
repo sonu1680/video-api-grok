@@ -28,6 +28,7 @@ function createAndConfigureServer() {
   // Tool: send_stories
   server.tool(
     "send_stories",
+    "Send a list of stories with their modules to n8n for processing",
     {
       stories: z.array(z.object({
         id: z.number().describe("Unique identifier for the story"),
@@ -56,6 +57,7 @@ function createAndConfigureServer() {
   // Tool: add_memory
   server.tool(
     "add_memory",
+    "Store memory or historical data in n8n",
     {
       data: z.string().describe("The text or information to be stored as memory")
     },
@@ -72,6 +74,7 @@ function createAndConfigureServer() {
   // Tool: get_memory
   server.tool(
     "get_memory",
+    "Fetch all stored memory or historical data from n8n",
     {},
     async () => {
       try {
