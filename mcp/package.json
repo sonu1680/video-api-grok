@@ -6,10 +6,7 @@
   "scripts": {
     "build": "tsc",
     "start": "node build/index.js",
-    "prod": "npm run start",
-    "dev": "npm run build && npm run inspector",
-    "dev:http": "npm run build && node build/index-http.js",
-    "start:http": "node build/index-http.js",
+    "dev": "npm run build && node build/index.js",
     "inspector": "DANGEROUSLY_OMIT_AUTH=true mcp-inspector node ./build/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
