@@ -1,4 +1,4 @@
-from modules.myntra_scraper import scrape_myntra_images
+from app.pipelines.myntra_scraper import scrape_myntra_images
 
 def test():
     url = "https://www.myntra.com/kurtas/kalini/kalini-ethnic-motifs-printed-mandarin-collar-straight-kurta/28375886/buy"

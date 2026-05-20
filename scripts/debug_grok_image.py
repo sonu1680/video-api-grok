@@ -9,8 +9,8 @@ import time
 
 sys.path.append(os.getcwd())
 
-import app as grok_app
-from app import IMAGE_USER_DATA
+from app import grok_client as grok_app
+from app.grok_client import IMAGE_USER_DATA
 from playwright.sync_api import sync_playwright
 
 TEST_IMAGE = "/home/sonupandit/Documents/videoapi/images/myntra/38347404/image_1.jpg"

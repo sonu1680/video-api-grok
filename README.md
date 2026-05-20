@@ -1,15 +1,40 @@
 # Grok Video Generation API
 
-A highly modular FastAPI backend for generating, merging, uploading, and notifying external workflows of automated AI video creation.
+A modular FastAPI backend for generating, merging, uploading, and notifying external workflows of automated AI video creation.
+
+## Project layout
+
+```
+app/                          # main Python package
+├── server.py                 # FastAPI entry point  (uvicorn app.server:app)
+├── config.py                 # paths, R2 creds, n8n webhook URLs
+├── grok_client.py            # headless Grok automation lib (was app.py)
+├── pipelines/                # media processors (image, video, merger, trimmer, uploader, myntra)
+├── integrations/             # n8n webhook sender + job fetcher
+├── visitors/                 # headless-browser surfaces (chatgpt, grok)
+└── persistence/              # job-state persistence (data/jobs/*.json)
+
+workflows/                    # n8n / orchestration definitions
+data/                         # runtime state (gitignored) — jobs/, images/, videos/
+assets/                       # static files (default.jpg, bg.mp3, default_images/)
+scripts/                      # dev/ops one-offs (setup_image_profile, debug_grok_image)
+tests/                        # pytest tests + fixtures/
+mcp/                          # separate TS sub-project, untouched
+```
 
 ## Getting Started
 
-1. **Environment Setup:** Make sure you are using your virtual environment (`source venv/bin/activate`).
-2. **Dependencies:** `pip install fastapi uvicorn pydantic playwright boto3 requests`
-3. **Configuration:** All sensitive keys (R2 Buckets) and URLs (n8n webhooks) are located in `config.py`. Update them there before running.
-4. **Execution:** 
+1. **Environment:** `source venv/bin/activate`
+2. **Dependencies:** `pip install fastapi uvicorn pydantic playwright boto3 requests send2trash`
+3. **Configuration:** R2 credentials and n8n webhook URLs live in `app/config.py`. Update before running.
+4. **Run the server:**
    ```bash
+   make dev
+   # or directly:
+   uvicorn app.server:app --host 0.0.0.0 --port 8000 --reload
    ```
+5. **Run visitors:** `make gpt` / `make grok`
+6. **Run tests:** `make test` (requires `pip install pytest`)
 ## Core Endpoints
 
 ### 1. Health & Queue check

@@ -17,7 +17,7 @@ IMAGE_USER_DATA = os.path.expanduser("~/.config/google-chrome-bot-image-profile"
 PROFILE   = "Default"
 GROK_URL  = "https://grok.com/imagine"
 
-IMAGE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "default.jpg")
+IMAGE_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "assets", "default.jpg")
 
 # Default prompt used when run directly from CLI
 DEFAULT_PROMPT = "man feeding the pigeon on building terrace"

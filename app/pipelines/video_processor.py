@@ -5,8 +5,8 @@ import subprocess
 from pathlib import Path
 from typing import List
 from playwright.sync_api import sync_playwright
-import app as grok_app
-from config import IMAGE_PATH, VIDEOS_DIR
+from app import grok_client as grok_app
+from app.config import IMAGE_PATH, VIDEOS_DIR
 
 log = logging.getLogger("GrokAPI.VideoProcessor")
 

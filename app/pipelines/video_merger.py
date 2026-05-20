@@ -3,7 +3,7 @@ import subprocess
 import logging
 from typing import List
 from pathlib import Path
-from config import BASE_DIR, VIDEOS_DIR
+from app.config import ASSETS_DIR, VIDEOS_DIR
 
 log = logging.getLogger("GrokAPI.VideoMerger")
 
@@ -17,7 +17,7 @@ def merge_videos(story_id: str, video_paths: List[Path], voiceover_path: Path = 
         raise ValueError("No video paths provided for merging.")
         
     # --- Trimming Stage ---
-    from modules.video_trimmer import detect_last_dialogue_end, trim_video_to_timestamp
+    from app.pipelines.video_trimmer import detect_last_dialogue_end, trim_video_to_timestamp
     trimmed_video_paths = []
     for idx, vp in enumerate(video_paths):
         log.info(f"[story_id: {story_id}] 🔍 Analyzing module {idx+1} for silent tail: {vp.name}")
@@ -26,7 +26,7 @@ def merge_videos(story_id: str, video_paths: List[Path], voiceover_path: Path = 
         trimmed_video_paths.append(trimmed_vp)
         
     concat_file = VIDEOS_DIR / f"concat_{story_id}.txt"
-    bg_audio_path = BASE_DIR / "bg.mp3"
+    bg_audio_path = ASSETS_DIR / "bg.mp3"
     
     has_bg_audio = bg_audio_path.exists()
     #has_voiceover = voiceover_path is not None and Path(voiceover_path).exists()

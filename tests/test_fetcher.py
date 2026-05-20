@@ -5,7 +5,7 @@ import json
 # Add project root to sys.path
 sys.path.append(os.getcwd())
 
-from modules.job_fetcher import fetch_new_jobs
+from app.integrations.job_fetcher import fetch_new_jobs
 
 def test_parsing():
     # Mock data based on aa.md

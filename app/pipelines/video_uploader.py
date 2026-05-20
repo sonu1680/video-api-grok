@@ -2,7 +2,7 @@ import os
 import boto3
 from botocore.config import Config
 from boto3.s3.transfer import TransferConfig
-from config import R2_ACCOUNT_ID, R2_ACCESS_KEY, R2_SECRET_KEY, R2_BUCKET_NAME
+from app.config import R2_ACCOUNT_ID, R2_ACCESS_KEY, R2_SECRET_KEY, R2_BUCKET_NAME
 
 def upload_video_to_r2(file_path: str, object_name: str = None) -> bool:
     """Uploads a video file to Cloudflare R2 bucket safely"""

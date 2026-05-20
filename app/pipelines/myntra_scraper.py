@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import List
 import requests
 
-from config import IMAGES_DIR
+from app.config import IMAGES_DIR
 
 log = logging.getLogger("GrokAPI.MyntraScraper")
 

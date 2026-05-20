@@ -1,0 +1,2741 @@
+{
+  "name": "AI video Production MultiChannel test",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "f399fe7e-c65b-4dd1-b848-0f4d50b569d4",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -3904,
+        560
+      ],
+      "id": "949639bc-fa52-4c6f-b81b-2f95961c3068",
+      "name": "Video Ready Webhook",
+      "webhookId": "f399fe7e-c65b-4dd1-b848-0f4d50b569d4"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Video Ready Webhook').item.json.body.video_url }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -2784,
+        560
+      ],
+      "id": "ad6487db-fe8e-4a44-8723-aa05b88ad302",
+      "name": "Download Final Video"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "e4177645-5608-4006-a604-6304b9da10c2",
+              "leftValue": "={{ $('Video Ready Webhook').item.json.body.video_type }}",
+              "rightValue": "object_talking",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {
+          "ignoreCase": true
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -2560,
+        560
+      ],
+      "id": "9d8d3102-9c7a-4a73-97c3-b74bc5a23254",
+      "name": "Route by videoType"
+    },
+    {
+      "parameters": {
+        "httpRequestMethod": "POST",
+        "graphApiVersion": "v22.0",
+        "node": "={{ $json.node }}",
+        "edge": "media",
+        "options": {
+          "queryParameters": {
+            "parameter": [
+              {
+                "name": "media_type",
+                "value": "REELS"
+              },
+              {
+                "name": "video_url",
+                "value": "={{ $json.videoUrl }}"
+              },
+              {
+                "name": "caption",
+                "value": "={{ $json.captionText }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.facebookGraphApi",
+      "typeVersion": 1,
+      "position": [
+        -2560,
+        -960
+      ],
+      "id": "7fe4fb54-e087-41e0-b093-1e8860020a91",
+      "name": "IG: Create Object Reel",
+      "retryOnFail": true,
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "PuSowAd8sPSNQngN",
+          "name": "Facebook Graph account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpRequestMethod": "POST",
+        "graphApiVersion": "v22.0",
+        "node": "={{ $('Parse Object Queue Item').item.json.node }}",
+        "edge": "media_publish",
+        "options": {
+          "queryParameters": {
+            "parameter": [
+              {
+                "name": "creation_id",
+                "value": "={{ $json.id }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.facebookGraphApi",
+      "typeVersion": 1,
+      "position": [
+        -2112,
+        -960
+      ],
+      "id": "fcc364f5-4279-4e7f-b7ad-22f92cbdbee1",
+      "name": "IG: Publish Object Reel",
+      "retryOnFail": true,
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "PuSowAd8sPSNQngN",
+          "name": "Facebook Graph account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 100,
+        "unit": "seconds"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        -2336,
+        -960
+      ],
+      "id": "16a0ff2b-6258-49fc-9d89-e019f906cde2",
+      "name": "Wait 100s (Object IG Encode)",
+      "webhookId": "02e713bf-d836-41b1-9a96-c6f1669e69ad",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "resource": "video",
+        "operation": "upload",
+        "title": "={{ $('Video Ready Webhook').item.json.body.title }} #shorts #viral #story",
+        "regionCode": "IN",
+        "categoryId": "=24",
+        "binaryProperty": "file",
+        "options": {
+          "description": "={{ $('Video Ready Webhook').item.json.body.description }}",
+          "privacyStatus": "private",
+          "tags": "={{ $('Video Ready Webhook').item.json.body.tags }}"
+        }
+      },
+      "type": "n8n-nodes-base.youTube",
+      "typeVersion": 1,
+      "position": [
+        -2336,
+        848
+      ],
+      "id": "9b86f268-f07c-4d72-87e8-48159c708285",
+      "name": "YT Upload: Chizo Ki Kahani",
+      "credentials": {
+        "youTubeOAuth2Api": {
+          "id": "MOrg8tI3qyyem0Ij",
+          "name": "CHIZO KI KAHANI Youtube Channel"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "updates": [
+          "*"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -3904,
+        -912
+      ],
+      "id": "7bc89e7c-adf5-4e48-a7bf-1ff9b59188b8",
+      "name": "Telegram Cmd Trigger",
+      "webhookId": "69835ecc-29e2-412a-a040-8ccc920fe0e6",
+      "credentials": {
+        "telegramApi": {
+          "id": "ODOZ5Lvpl9OgnOR3",
+          "name": "VideoPublishApproval"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const parsed = JSON.parse($input.first().json.result);\nreturn [{ json: parsed }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2784,
+        -768
+      ],
+      "id": "4e26c953-c4ae-43fe-b03e-49f9aa74c0bb",
+      "name": "Parse Object Queue Item"
+    },
+    {
+      "parameters": {
+        "chatId": "=1463894585",
+        "text": "=✅ *Reel uploaded to Instagram CHIZO KI KAHANI!*",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -1888,
+        -960
+      ],
+      "id": "559ecab0-f0fb-4cb1-bdca-6f9272adcb87",
+      "name": "Notify: Object Reel Posted",
+      "webhookId": "send-upload-success-webhook-001",
+      "retryOnFail": true,
+      "credentials": {
+        "telegramApi": {
+          "id": "ODOZ5Lvpl9OgnOR3",
+          "name": "VideoPublishApproval"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://choice-shrimp-81080.upstash.io/lpush/publish:object_talking",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer gQAAAAAAATy4AAIncDJlN2I0ZTJkMzY2NDQ0NmM0YmQyZTFlZjNmMGVmOWMzMXAyODEwODA"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  videoUrl:          $json.videoUrl,\n  captionText:       $json.captionText,\n  node:              $json.node,\n  videoType:         $json.videoType,\n  chizoKiKahani:     $json.chizoKiKahani,\n  cuteLittleElephant:$json.cuteLittleElephant,\n  nutriToon:         $json.nutriToon,\n  kyaHoAgar:         $json.kyaHoAgar,\n  youtubeVideoId:    $json.youtubeVideoId\n}) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -1216,
+        464
+      ],
+      "id": "00e1e198-36bd-4e7f-aa70-52caed82d54e",
+      "name": "LPUSH publish:object_talking",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "chatId": "1463894585",
+        "message": "=🎬 **Your video is ready!**\n\n👉 Please review it carefully and approve it.\n✅ Once approved, it will be uploaded to **YouTube** and **Reels**.\n\n🔗 Video Link: {{ $('Video Ready Webhook').item.json.body.video_url }}\n",
+        "approvalOptions": {
+          "values": {
+            "approvalType": "double"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -3232,
+        560
+      ],
+      "id": "6834ee29-2f3d-4aec-a85a-ab2720f70c32",
+      "name": "Telegram: Ask Approval",
+      "webhookId": "54bcae07-4d8f-4ee5-956c-31ca32e58293",
+      "retryOnFail": true,
+      "alwaysOutputData": false,
+      "credentials": {
+        "telegramApi": {
+          "id": "ODOZ5Lvpl9OgnOR3",
+          "name": "VideoPublishApproval"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://choice-shrimp-81080.upstash.io/rpop/publish:object_talking",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "gQAAAAAAATy4AAIncDJlN2I0ZTJkMzY2NDQ0NmM0YmQyZTFlZjNmMGVmOWMzMXAyODEwODA"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -3232,
+        -576
+      ],
+      "id": "1a806fcf-c326-4932-a8af-f2202711b4b4",
+      "name": "RPOP publish:object_talking",
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.data }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -3232,
+        2416
+      ],
+      "id": "13bb58e4-a8fd-43fd-a692-f009cd126e6a",
+      "name": "Respond: Object Memory"
+    },
+    {
+      "parameters": {
+        "chatId": "1463894585",
+        "text": "Reel is Publishing and youtube video making public.",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -3456,
+        -576
+      ],
+      "id": "f308182b-31e9-4036-9659-6750af40003f",
+      "name": "Notify: Publishing Object",
+      "webhookId": "d8d58490-c463-4874-8b9b-b1b45e737844",
+      "credentials": {
+        "telegramApi": {
+          "id": "ODOZ5Lvpl9OgnOR3",
+          "name": "VideoPublishApproval"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "216310a9-a875-4730-a2c5-1a40d3555218",
+              "leftValue": "={{ $json.result === null || $json.result === undefined || $json.result === '' }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": "={{ true }}",
+        "options": {
+          "ignoreCase": true
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -3008,
+        -576
+      ],
+      "id": "b5508c34-1797-4d43-b1ef-deb80c3b6b3c",
+      "name": "If: Object Video Exists?"
+    },
+    {
+      "parameters": {
+        "chatId": "1463894585",
+        "text": "No video found object video,Please make first",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -2784,
+        -384
+      ],
+      "id": "056127ca-e784-4aff-b6ae-d3a0366bf875",
+      "name": "Notify: No Object Video",
+      "webhookId": "51e17adf-e937-4822-9803-0173c48e0c40",
+      "credentials": {
+        "telegramApi": {
+          "id": "ODOZ5Lvpl9OgnOR3",
+          "name": "VideoPublishApproval"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "sendVideo",
+        "chatId": "1463894585",
+        "file": "={{ $json.body.video_url }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -3456,
+        560
+      ],
+      "id": "729efdd0-68cb-4053-a647-93cf94aca121",
+      "name": "Telegram: Send Preview Video",
+      "webhookId": "302fc77a-fbef-49de-b6de-a5c61027abbb",
+      "retryOnFail": true,
+      "credentials": {
+        "telegramApi": {
+          "id": "ODOZ5Lvpl9OgnOR3",
+          "name": "VideoPublishApproval"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "ff659dfb-7267-4c87-a170-69385ef42a63",
+              "leftValue": "={{ $json.data.approved }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -3008,
+        560
+      ],
+      "id": "1b53f2d2-e260-4292-b8ac-755246bb32fa",
+      "name": "If: Approved?",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "chatId": "1463894585",
+        "text": "❌ **Video Rejected**  No worries! You rejected the video, so it will **not be uploaded** to YouTube or Reels.  🔄 You can start building a new video anytime — just follow the same process again.  Let’s create something even better 🚀",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -2784,
+        752
+      ],
+      "id": "83ef9f2e-1ec7-48b7-a9b7-f97fa8629a94",
+      "name": "Notify: Rejected",
+      "webhookId": "302fc77a-fbef-49de-b6de-a5c61027abbb",
+      "retryOnFail": true,
+      "credentials": {
+        "telegramApi": {
+          "id": "ODOZ5Lvpl9OgnOR3",
+          "name": "VideoPublishApproval"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "chatId": "1463894585",
+        "text": "✅ **Video Approved**  Great choice! Your video has been approved and is now being uploaded to **YouTube** and **Reels**.  🚀 Sit back and relax — your content is on its way!",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -2784,
+        368
+      ],
+      "id": "7df32315-1a37-44eb-8a7f-eaa6b4e20e2d",
+      "name": "Notify: Approved",
+      "webhookId": "302fc77a-fbef-49de-b6de-a5c61027abbb",
+      "retryOnFail": true,
+      "credentials": {
+        "telegramApi": {
+          "id": "ODOZ5Lvpl9OgnOR3",
+          "name": "VideoPublishApproval"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "url": "https://choice-shrimp-81080.upstash.io/lrange/publish:object_talking/0/-1",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "gQAAAAAAATy4AAIncDJlN2I0ZTJkMzY2NDQ0NmM0YmQyZTFlZjNmMGVmOWMzMXAyODEwODA"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -3456,
+        -816
+      ],
+      "id": "5f6a43bf-69a8-4084-ba3c-52c701262ae5",
+      "name": "LRANGE publish:object_talking",
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "parameters": {
+        "resource": "video",
+        "operation": "upload",
+        "title": "={{ $('Video Ready Webhook').item.json.body.title }} #shorts #viral #story",
+        "regionCode": "IN",
+        "categoryId": "=24",
+        "binaryProperty": "file",
+        "options": {
+          "description": "={{ $('Video Ready Webhook').item.json.body.description }}",
+          "privacyStatus": "private",
+          "tags": "={{ $('Video Ready Webhook').item.json.body.tags }}"
+        }
+      },
+      "type": "n8n-nodes-base.youTube",
+      "typeVersion": 1,
+      "position": [
+        -2336,
+        464
+      ],
+      "id": "d9bee33e-ec6c-448f-949b-7912778fe1e4",
+      "name": "YT Upload: Cute Little Elephant",
+      "credentials": {
+        "youTubeOAuth2Api": {
+          "id": "jAMij8ayIm5VRADQ",
+          "name": "cute little elephant"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "video",
+        "operation": "upload",
+        "title": "={{ $('Video Ready Webhook').item.json.body.title }} #shorts #viral #story",
+        "regionCode": "IN",
+        "categoryId": "=24",
+        "binaryProperty": "file",
+        "options": {
+          "description": "={{ $('Video Ready Webhook').item.json.body.description }}",
+          "privacyStatus": "private",
+          "tags": "={{ $('Video Ready Webhook').item.json.body.tags }}"
+        }
+      },
+      "type": "n8n-nodes-base.youTube",
+      "typeVersion": 1,
+      "position": [
+        -2336,
+        656
+      ],
+      "id": "b281a473-d38b-460f-9cec-58174a931ffa",
+      "name": "YT Upload: Nutritoon",
+      "credentials": {
+        "youTubeOAuth2Api": {
+          "id": "5liLs2i2wQO6erVC",
+          "name": "NutriToon"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "video",
+        "operation": "update",
+        "videoId": "={{ $json.chizoKiKahani }}",
+        "title": "={{ $json.captionText }} #shorts #viral",
+        "regionCode": "IN",
+        "categoryId": "24",
+        "updateFields": {
+          "privacyStatus": "public"
+        }
+      },
+      "type": "n8n-nodes-base.youTube",
+      "typeVersion": 1,
+      "position": [
+        -2560,
+        0
+      ],
+      "id": "7252b669-6cc1-4641-8599-2adfea2f561a",
+      "name": "Make Chizo Ki Kahani YT Public",
+      "credentials": {
+        "youTubeOAuth2Api": {
+          "id": "MOrg8tI3qyyem0Ij",
+          "name": "CHIZO KI KAHANI Youtube Channel"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "cuteLittleElephant",
+              "value": "={{ $json.uploadId }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Set cuteLittleElephant ID",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [
+        -2112,
+        464
+      ],
+      "id": "dfe0e228-56c6-407b-acf0-a94af15cd6b2"
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "nutriToon",
+              "value": "={{ $json.uploadId }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Set nutriToon ID",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [
+        -2112,
+        656
+      ],
+      "id": "948c530f-33d7-4b4a-99cf-0e26b7209ac2"
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "chizoKiKahani",
+              "value": "={{ $json.uploadId }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Set chizoKiKahani ID",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [
+        -2112,
+        848
+      ],
+      "id": "1e1c7e20-20df-4121-9138-c6e605ef41b2"
+    },
+    {
+      "parameters": {},
+      "name": "Merge Object Uploads",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2.1,
+      "position": [
+        -1888,
+        368
+      ],
+      "id": "dda18237-cb6b-4ff5-ba4b-aa5a497d80d8"
+    },
+    {
+      "parameters": {},
+      "name": "Merge Food Uploads",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2.1,
+      "position": [
+        -1888,
+        752
+      ],
+      "id": "6ecb3e8e-864e-42dc-819e-56365215b8de"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Explicitly aggregate per-channel upload IDs (no Object.assign).\n// Rule: nested { storyId, videoType, youtube: { kyaHoAgar, cuteLittleElephant, chizoKiKahani, nutriToon } }.\nconst items = $input.all();\n\nconst pick = (key) => {\n  for (const it of items) {\n    const v = it.json && it.json[key];\n    if (v !== undefined && v !== null && v !== '') return v;\n  }\n  return null;\n};\n\nconst body = $('Video Ready Webhook').item.json.body || {};\n\nconst aggregated = {\n  storyId:     body.story_id,\n  videoType:   body.video_type,\n  videoUrl:    body.video_url,\n  captionText: (body.title || '') + ' #reels #viral',\n  node:        '17841445298218124',\n  youtube: {\n    kyaHoAgar:          pick('kyaHoAgar'),\n    cuteLittleElephant: pick('cuteLittleElephant'),\n    chizoKiKahani:      pick('chizoKiKahani'),\n    nutriToon:          pick('nutriToon')\n  },\n  // Back-compat flat fields kept so existing downstream expressions keep working\n  kyaHoAgar:          pick('kyaHoAgar'),\n  cuteLittleElephant: pick('cuteLittleElephant'),\n  chizoKiKahani:      pick('chizoKiKahani'),\n  nutriToon:          pick('nutriToon'),\n  youtubeVideoId:     pick('youtubeVideoId')\n};\n\n// Cross-content guard: refuse if a forbidden channel slot was populated for the videoType\nconst FORBIDDEN = {\n  object_talking: ['chizoKiKahani', 'nutriToon'],\n  food_discovery: ['kyaHoAgar', 'cuteLittleElephant']\n};\nconst bad = (FORBIDDEN[aggregated.videoType] || []).filter(k => aggregated.youtube[k]);\nif (bad.length) {\n  throw new Error('Routing violation: ' + aggregated.videoType + ' produced upload(s) for forbidden channel(s): ' + bad.join(', '));\n}\n\nreturn [{ json: aggregated }];\n"
+      },
+      "name": "Aggregate YouTube IDs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1664,
+        560
+      ],
+      "id": "a8b1d3dc-7e16-4608-881a-059b971f4dde"
+    },
+    {
+      "parameters": {
+        "resource": "video",
+        "operation": "update",
+        "videoId": "={{ $json.cuteLittleElephant }}",
+        "title": "={{ $json.captionText }} #shorts #viral",
+        "regionCode": "IN",
+        "categoryId": "24",
+        "updateFields": {
+          "privacyStatus": "public"
+        }
+      },
+      "name": "Make Cute Little Elephant YT Public",
+      "type": "n8n-nodes-base.youTube",
+      "typeVersion": 1,
+      "position": [
+        -2560,
+        -576
+      ],
+      "id": "20657bf1-b3a3-459f-9105-033a6de9ff40",
+      "retryOnFail": true,
+      "credentials": {
+        "youTubeOAuth2Api": {
+          "id": "jAMij8ayIm5VRADQ",
+          "name": "cute little elephant"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "video",
+        "operation": "update",
+        "videoId": "={{ $json.nutriToon }}",
+        "title": "={{ $json.captionText }} #shorts #viral",
+        "regionCode": "IN",
+        "categoryId": "24",
+        "updateFields": {
+          "privacyStatus": "public"
+        }
+      },
+      "name": "Make Nutritoon YT Public",
+      "type": "n8n-nodes-base.youTube",
+      "typeVersion": 1,
+      "position": [
+        -2560,
+        -192
+      ],
+      "id": "ba839851-0bc8-4000-8360-7bf560a6abce",
+      "retryOnFail": true,
+      "credentials": {
+        "youTubeOAuth2Api": {
+          "id": "5liLs2i2wQO6erVC",
+          "name": "NutriToon"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "video",
+        "operation": "update",
+        "videoId": "={{ $json.kyaHoAgar }}",
+        "title": "={{ $json.captionText }} #shorts #viral",
+        "regionCode": "IN",
+        "categoryId": "27",
+        "updateFields": {
+          "privacyStatus": "public"
+        }
+      },
+      "name": "Make Kya Ho Agar YT Public",
+      "type": "n8n-nodes-base.youTube",
+      "typeVersion": 1,
+      "position": [
+        -2560,
+        -768
+      ],
+      "id": "8031f100-091d-4a52-aa63-3dcffb56eee4",
+      "retryOnFail": true,
+      "credentials": {
+        "youTubeOAuth2Api": {
+          "id": "77uS4nQLwOsDoKNW",
+          "name": "KYA HO AGAR Youtube Channel"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "cizo_ki_kahani",
+          "mode": "list",
+          "cachedResultName": "cizo_ki_kahani"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "data": "={{ $json.body.data }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "data",
+              "displayName": "data",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -3680,
+        1968
+      ],
+      "id": "f60d5d65-fded-434e-af4d-40cb4b71fde9",
+      "name": "Insert: cizo_ki_kahani",
+      "credentials": {
+        "postgres": {
+          "id": "5KoKo4gUsBg8HhHF",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * \nFROM cizo_ki_kahani\nORDER BY id DESC;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -3680,
+        2416
+      ],
+      "id": "ea6b5b7e-da54-452e-b84e-93f0c4f90e89",
+      "name": "Query: cizo_ki_kahani",
+      "credentials": {
+        "postgres": {
+          "id": "5KoKo4gUsBg8HhHF",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://choice-shrimp-81080.upstash.io/rpop/object_talking",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "gQAAAAAAATy4AAIncDJlN2I0ZTJkMzY2NDQ0NmM0YmQyZTFlZjNmMGVmOWMzMXAyODEwODA"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -3680,
+        1296
+      ],
+      "id": "549df6f8-b464-43db-ac01-63d8f3c00b5f",
+      "name": "RPOP object_talking (script)",
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -3456,
+        1296
+      ],
+      "id": "549803bb-bd60-49fe-8081-1f7997d6c058",
+      "name": "Respond: Object Script"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://choice-shrimp-81080.upstash.io/lpush/object_talking",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "gQAAAAAAATy4AAIncDJlN2I0ZTJkMzY2NDQ0NmM0YmQyZTFlZjNmMGVmOWMzMXAyODEwODA"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "data",
+              "value": "={{ $json.body }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -3680,
+        1520
+      ],
+      "id": "f4f0e830-a512-469f-b8e9-83cabfb7a8cb",
+      "name": "LPUSH object_talking (script)",
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "parameters": {
+        "httpRequestMethod": "POST",
+        "graphApiVersion": "v22.0",
+        "node": "=17841454553831084",
+        "edge": "media",
+        "options": {
+          "queryParameters": {
+            "parameter": [
+              {
+                "name": "media_type",
+                "value": "REELS"
+              },
+              {
+                "name": "video_url",
+                "value": "={{ $json.videoUrl }}"
+              },
+              {
+                "name": "caption",
+                "value": "={{ $json.captionText }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.facebookGraphApi",
+      "typeVersion": 1,
+      "position": [
+        -2560,
+        -384
+      ],
+      "id": "77e3def3-42f9-4ef3-ac24-63d2a736fd62",
+      "name": "IG: Create Food Reel",
+      "retryOnFail": true,
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "vg8UnyzKeEF8V2p5",
+          "name": "kya ho agar"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 100,
+        "unit": "seconds"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        -2336,
+        -384
+      ],
+      "id": "0514baa3-0936-47f3-b7b7-da4e98a7b443",
+      "name": "Wait 100s (Food IG Encode)",
+      "webhookId": "02e713bf-d836-41b1-9a96-c6f1669e69ad",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "httpRequestMethod": "POST",
+        "graphApiVersion": "v22.0",
+        "node": "=17841454553831084",
+        "edge": "media_publish",
+        "options": {
+          "queryParameters": {
+            "parameter": [
+              {
+                "name": "creation_id",
+                "value": "={{ $json.id }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.facebookGraphApi",
+      "typeVersion": 1,
+      "position": [
+        -2112,
+        -384
+      ],
+      "id": "f6f6b54f-42d5-4e6d-8977-b0ad6d359396",
+      "name": "IG: Publish Food Reel",
+      "retryOnFail": true,
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "vg8UnyzKeEF8V2p5",
+          "name": "kya ho agar"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://choice-shrimp-81080.upstash.io/llen/script:object_talking",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "gQAAAAAAATy4AAIncDJlN2I0ZTJkMzY2NDQ0NmM0YmQyZTFlZjNmMGVmOWMzMXAyODEwODA"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -3456,
+        -1008
+      ],
+      "id": "a7ba7f1f-d208-4754-840d-bd903cc48749",
+      "name": "LLEN script:object_talking",
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://choice-shrimp-81080.upstash.io/rpop/food_discovery",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "gQAAAAAAATy4AAIncDJlN2I0ZTJkMzY2NDQ0NmM0YmQyZTFlZjNmMGVmOWMzMXAyODEwODA"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -3680,
+        1072
+      ],
+      "id": "61a511a0-84d7-4240-95f7-a490c1305587",
+      "name": "RPOP food_discovery (script)",
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -3456,
+        1072
+      ],
+      "id": "0613b0ca-e855-4711-948c-6c3a29b1451f",
+      "name": "Respond: Food Script"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "=\"story received\"",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -3456,
+        1520
+      ],
+      "id": "3e915d0d-50c6-4f8b-9774-57093e1b1263",
+      "name": "Respond: Object Script Stored"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "b475f8a7-00b1-4c61-be5e-25c2ea9ec393",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -3904,
+        2416
+      ],
+      "id": "e10cf1da-c136-4e6c-bc5a-38a9437ada39",
+      "name": "Webhook: Get Object Memory",
+      "webhookId": "b475f8a7-00b1-4c61-be5e-25c2ea9ec393"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ff045203-6928-4375-85af-208cf22b4d4c",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -3904,
+        1968
+      ],
+      "id": "043acbc0-14d9-4a70-a963-190854c0c885",
+      "name": "Webhook: Store Object Name",
+      "webhookId": "ff045203-6928-4375-85af-208cf22b4d4c"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "c24ec734-cf0c-40cd-b168-58779fcde463",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -3904,
+        1520
+      ],
+      "id": "f82880b3-9a03-4526-aa10-2652ff12d161",
+      "name": "Webhook: Store Object Script",
+      "webhookId": "c24ec734-cf0c-40cd-b168-58779fcde463"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "=\"story received\"",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -3456,
+        1744
+      ],
+      "id": "39d3eaf9-892c-419a-89ae-040df1540ebb",
+      "name": "Respond: Food Script Stored"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * \nFROM food_discovery\nORDER BY id DESC;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -3680,
+        2640
+      ],
+      "id": "72188c10-9d13-418e-a68a-6f13884c6074",
+      "name": "Query: food_discovery",
+      "credentials": {
+        "postgres": {
+          "id": "5KoKo4gUsBg8HhHF",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.all()\n\nlet result = [];\n\nrows.forEach(r => {\n  const value = r.json.data;\n\n  if (value) {\n    // split comma values\n    const parts = value.split(\",\");\n\n    parts.forEach(p => {\n      const clean = p.trim().toLowerCase();\n      if (clean) result.push(clean);\n    });\n  }\n});\n\nreturn [\n  {\n    json: {\n      data: result\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3456,
+        2640
+      ],
+      "id": "fae9910b-8fac-4de2-b16a-fab8a2a53de1",
+      "name": "Parse Food Memory Rows"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.data }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -3232,
+        2640
+      ],
+      "id": "599033ea-e89b-41c2-ab87-a2b575d864d1",
+      "name": "Respond: Food Memory"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "b475f8a7-00b1-4c61-be5e-25c2ea9ec391",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -3904,
+        2640
+      ],
+      "id": "f3f27444-e1b6-4a9d-9f00-97d9f13ac895",
+      "name": "Webhook: Get Food Memory",
+      "webhookId": "b475f8a7-00b1-4c61-be5e-25c2ea9ec391"
+    },
+    {
+      "parameters": {
+        "content": "Get memory for ai",
+        "height": 464,
+        "width": 1072
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -4056,
+        2336
+      ],
+      "typeVersion": 1,
+      "id": "fa285839-0d1d-455a-acc4-26b6693f523d",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.all()\n\nlet result = [];\n\nrows.forEach(r => {\n  const value = r.json.data;\n\n  if (value) {\n    // split comma values\n    const parts = value.split(\",\");\n\n    parts.forEach(p => {\n      const clean = p.trim().toLowerCase();\n      if (clean) result.push(clean);\n    });\n  }\n});\n\nreturn [\n  {\n    json: {\n      data: result\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3456,
+        2416
+      ],
+      "id": "a5a2c72f-6b2f-498e-a5d3-ca7ab1fb2447",
+      "name": "Parse Object Memory Rows"
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "food_discovery",
+          "mode": "list",
+          "cachedResultName": "food_discovery"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "data": "={{ $json.body.data }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "data",
+              "displayName": "data",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -3680,
+        2192
+      ],
+      "id": "be39640b-968b-45cc-9b0e-076e4cf99830",
+      "name": "Insert: food_discovery",
+      "credentials": {
+        "postgres": {
+          "id": "5KoKo4gUsBg8HhHF",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ff045203-6928-4375-85af-208cf22b4d4a",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -3904,
+        2192
+      ],
+      "id": "55a214fe-59f4-4ce1-b663-90155a2fb338",
+      "name": "Webhook: Store Food Name",
+      "webhookId": "ff045203-6928-4375-85af-208cf22b4d4a"
+    },
+    {
+      "parameters": {
+        "height": 400,
+        "width": 832
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -4160,
+        1952
+      ],
+      "typeVersion": 1,
+      "id": "7d73c513-d92c-44bb-af7e-f50465d032c8",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "height": 544,
+        "width": 1264
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -4264,
+        912
+      ],
+      "typeVersion": 1,
+      "id": "82839273-1c95-43e7-a532-9919c7627e9d",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "path": "df5a2f10-c375-4d79-90d6-c0f79c52e6f1",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -3904,
+        1296
+      ],
+      "id": "69db83ec-9483-4075-955f-34c62530642c",
+      "name": "Webhook: Get Object Script",
+      "webhookId": "df5a2f10-c375-4d79-90d6-c0f79c52e6f1"
+    },
+    {
+      "parameters": {
+        "path": "df5a2f10-c375-4d79-90d6-c0f79c52e6f2",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -3904,
+        1072
+      ],
+      "id": "82a46d76-9c98-4623-8340-2d8b87d53657",
+      "name": "Webhook: Get Food Script",
+      "webhookId": "df5a2f10-c375-4d79-90d6-c0f79c52e6f2"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://choice-shrimp-81080.upstash.io/lpush/publish:food_discovery",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer gQAAAAAAATy4AAIncDJlN2I0ZTJkMzY2NDQ0NmM0YmQyZTFlZjNmMGVmOWMzMXAyODEwODA"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  videoUrl:          $json.videoUrl,\n  captionText:       $json.captionText,\n  node:              $json.node,\n  videoType:         $json.videoType,\n  chizoKiKahani:     $json.chizoKiKahani,\n  cuteLittleElephant:$json.cuteLittleElephant,\n  nutriToon:         $json.nutriToon,\n  kyaHoAgar:         $json.kyaHoAgar,\n  youtubeVideoId:    $json.youtubeVideoId\n}) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -1216,
+        656
+      ],
+      "id": "9169235b-6831-4e4d-aa69-4ee2cc6be5eb",
+      "name": "LPUSH publish:food_discovery",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Strict payload validation — rules brief contract.\n// Required: story_id, video_url, video_type ∈ {object_talking, food_discovery}.\nconst body = $input.first().json.body || $input.first().json || {};\n\nconst errors = [];\nif (!body.story_id)  errors.push(\"missing 'story_id'\");\nif (!body.video_url) errors.push(\"missing 'video_url'\");\nconst ALLOWED = ['object_talking', 'food_discovery'];\nif (!ALLOWED.includes(body.video_type)) errors.push(\"invalid 'video_type' (got \" + JSON.stringify(body.video_type) + \"; expected one of \" + ALLOWED.join('|') + \")\");\n\nif (errors.length) {\n  throw new Error('Payload validation failed: ' + errors.join('; '));\n}\n\nreturn [{ json: { body, validated: true } }];\n"
+      },
+      "id": "fd02aeb7-f379-4d1c-a935-087d0a3b19fe",
+      "name": "Validate Webhook Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3680,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "video",
+        "operation": "upload",
+        "title": "={{ $('Video Ready Webhook').item.json.body.title }} #shorts #viral #story",
+        "regionCode": "IN",
+        "categoryId": "=24",
+        "binaryProperty": "file",
+        "options": {
+          "description": "={{ $('Video Ready Webhook').item.json.body.description }}",
+          "privacyStatus": "private",
+          "tags": "={{ $('Video Ready Webhook').item.json.body.tags }}"
+        }
+      },
+      "id": "a731d487-9e09-4054-acab-77dd94abca0e",
+      "name": "YT Upload: Kya Ho Agar",
+      "type": "n8n-nodes-base.youTube",
+      "typeVersion": 1,
+      "position": [
+        -2336,
+        272
+      ],
+      "credentials": {
+        "youTubeOAuth2Api": {
+          "id": "77uS4nQLwOsDoKNW",
+          "name": "KYA HO AGAR Youtube Channel"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "kyaHoAgar",
+              "value": "={{ $json.uploadId }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "810e429b-cb0e-409d-b749-e94488480e79",
+      "name": "Set kyaHoAgar ID",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        -2112,
+        272
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "e197b8df-52b6-493c-81c3-dba0f59fe9bd",
+                    "leftValue": "={{ $json.videoType }}",
+                    "rightValue": "object_talking",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "5958555c-f62c-45f6-bb2d-9458d1b8862c",
+                    "leftValue": "={{ $json.videoType }}",
+                    "rightValue": "food_discovery",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "9a33423a-02a6-4671-bccd-bfffaff729d9",
+      "name": "Queue Router (by videoType)",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -1440,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://choice-shrimp-81080.upstash.io/lpush/food_discovery",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "gQAAAAAAATy4AAIncDJlN2I0ZTJkMzY2NDQ0NmM0YmQyZTFlZjNmMGVmOWMzMXAyODEwODA"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "data",
+              "value": "={{ $json.body }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -3680,
+        1744
+      ],
+      "id": "3fae5c6f-6e6b-41b3-b2c0-31209a74d81e",
+      "name": "LPUSH food_discovery (script)",
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "8f08ec11-d1ad-45d8-ae8f-4f9c37f72612",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -3904,
+        1744
+      ],
+      "id": "98ba0a43-5c8e-4212-a789-12a7224d6155",
+      "name": "Webhook: Store Food Script",
+      "webhookId": "8f08ec11-d1ad-45d8-ae8f-4f9c37f72612"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "food",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "b1b9f1e1-a4ca-4163-8b47-612258eb6c42"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "eff2966a-436b-4fcd-986d-b4ec6965ce81",
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "object",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "d256c964-711b-465c-80ca-9c64506df5e1",
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "count",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -3680,
+        -928
+      ],
+      "id": "ea48d1c7-0c6c-4311-b6f2-49e7002e47b4",
+      "name": "Switch: Telegram Command"
+    },
+    {
+      "parameters": {
+        "chatId": "1463894585",
+        "text": "Reel is Publishing and youtube video making public.",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -3456,
+        -96
+      ],
+      "id": "1dc40969-704c-47cb-9cb5-712bd25b7afb",
+      "name": "Notify: Publishing Food",
+      "webhookId": "d8d58490-c463-4874-8b9b-b1b45e737844",
+      "credentials": {
+        "telegramApi": {
+          "id": "ODOZ5Lvpl9OgnOR3",
+          "name": "VideoPublishApproval"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://choice-shrimp-81080.upstash.io/rpop/publish:food_discovery",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "gQAAAAAAATy4AAIncDJlN2I0ZTJkMzY2NDQ0NmM0YmQyZTFlZjNmMGVmOWMzMXAyODEwODA"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -3232,
+        -96
+      ],
+      "id": "a64dfdc4-4659-455b-b88a-954ad1d98812",
+      "name": "RPOP publish:food_discovery",
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "216310a9-a875-4730-a2c5-1a40d3555218",
+              "leftValue": "={{ $json.result === null || $json.result === undefined || $json.result === '' }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": "={{ true }}",
+        "options": {
+          "ignoreCase": true
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -3008,
+        -96
+      ],
+      "id": "270bd4aa-acd4-4f81-9bfd-2192a0c55ba2",
+      "name": "If: Food Video Exists?"
+    },
+    {
+      "parameters": {
+        "chatId": "1463894585",
+        "text": "No video found object video,Please make first",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -2784,
+        0
+      ],
+      "id": "1ecef643-e70c-4830-9cfe-9d272fe61cd5",
+      "name": "Notify: No Food Video",
+      "webhookId": "51e17adf-e937-4822-9803-0173c48e0c40",
+      "credentials": {
+        "telegramApi": {
+          "id": "ODOZ5Lvpl9OgnOR3",
+          "name": "VideoPublishApproval"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const parsed = JSON.parse($input.first().json.result);\nreturn [{ json: parsed }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2784,
+        -192
+      ],
+      "id": "a11a224f-8abd-458e-89e2-bf73760a405d",
+      "name": "Parse Food Queue Item"
+    },
+    {
+      "parameters": {
+        "chatId": "=1463894585",
+        "text": "=✅ *Reel uploaded to Instagram CHIZO KI KAHANI!*",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -1888,
+        -384
+      ],
+      "id": "616bca18-b2ca-4006-a4fd-b50a6d9e3e97",
+      "name": "Notify: Food Reel Posted",
+      "webhookId": "send-upload-success-webhook-001",
+      "retryOnFail": true,
+      "credentials": {
+        "telegramApi": {
+          "id": "ODOZ5Lvpl9OgnOR3",
+          "name": "VideoPublishApproval"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://choice-shrimp-81080.upstash.io/llen/script:food_discovery",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "gQAAAAAAATy4AAIncDJlN2I0ZTJkMzY2NDQ0NmM0YmQyZTFlZjNmMGVmOWMzMXAyODEwODA"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -3456,
+        -1392
+      ],
+      "id": "90ba3c06-fab5-4010-884d-1dd4704ba632",
+      "name": "LLEN script:food_discovery",
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "parameters": {
+        "url": "https://choice-shrimp-81080.upstash.io/lrange/publish:food_discovery/0/-1",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "gQAAAAAAATy4AAIncDJlN2I0ZTJkMzY2NDQ0NmM0YmQyZTFlZjNmMGVmOWMzMXAyODEwODA"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -3456,
+        -1200
+      ],
+      "id": "1d51a1b2-f20f-43d4-b4ef-9403217b38bd",
+      "name": "LRANGE publish:food_discovery",
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 8
+            },
+            {
+              "triggerAtHour": 12
+            },
+            {
+              "triggerAtHour": 18
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -4336,
+        -224
+      ],
+      "id": "b9a1aa11-eb0e-46e0-a904-e16db068c848",
+      "name": "Cron: Publish 8/12/18"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build a single Telegram message combining all 4 Redis lookups\nconst objCnt   = $('LLEN script:object_talking').first().json.result;\nconst objPub   = $('LRANGE publish:object_talking').first().json.result || [];\nconst foodCnt  = $('LLEN script:food_discovery').first().json.result;\nconst foodPub  = $('LRANGE publish:food_discovery').first().json.result || [];\n\nconst title = (s) => {\n  try {\n    const o = JSON.parse(s);\n    return o.captionText || o.videoUrl || '<no title>';\n  } catch { return String(s).slice(0, 80); }\n};\nconst fmt = (arr) => arr.length\n  ? arr.map((s, i) => `  ${i + 1}. ${title(s)}`).join('\\n')\n  : '  _none_';\n\nconst message =\n`\\ud83d\\udcca *Queue Status*\n\n\\ud83c\\udfac *object_talking*\n\\u2022 Scripts queued: ${objCnt ?? 0}\n\\u2022 Publish-ready (${objPub.length}):\n${fmt(objPub)}\n\n\\ud83c\\udf72 *food_discovery*\n\\u2022 Scripts queued: ${foodCnt ?? 0}\n\\u2022 Publish-ready (${foodPub.length}):\n${fmt(foodPub)}`;\n\nreturn [{ json: { message } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2784,
+        -1200
+      ],
+      "id": "c156b8d3-f0b6-4b05-ba97-2989a37267d3",
+      "name": "Build Queue Summary"
+    },
+    {
+      "parameters": {
+        "chatId": "1463894585",
+        "text": "={{ $json.message }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -2560,
+        -1200
+      ],
+      "id": "483aa2f2-1033-467d-b190-f64294f23c9d",
+      "name": "Telegram: Queue Status",
+      "webhookId": "77612bee-ad02-465e-a8c5-f4abded8002b",
+      "credentials": {
+        "telegramApi": {
+          "id": "ODOZ5Lvpl9OgnOR3",
+          "name": "VideoPublishApproval"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Video Ready Webhook": {
+      "main": [
+        [
+          {
+            "node": "Validate Webhook Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Final Video": {
+      "main": [
+        [
+          {
+            "node": "Route by videoType",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by videoType": {
+      "main": [
+        [
+          {
+            "node": "YT Upload: Cute Little Elephant",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "YT Upload: Kya Ho Agar",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "YT Upload: Chizo Ki Kahani",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "YT Upload: Nutritoon",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IG: Create Object Reel": {
+      "main": [
+        [
+          {
+            "node": "Wait 100s (Object IG Encode)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 100s (Object IG Encode)": {
+      "main": [
+        [
+          {
+            "node": "IG: Publish Object Reel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IG: Publish Object Reel": {
+      "main": [
+        [
+          {
+            "node": "Notify: Object Reel Posted",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "YT Upload: Chizo Ki Kahani": {
+      "main": [
+        [
+          {
+            "node": "Set chizoKiKahani ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Cmd Trigger": {
+      "main": [
+        [
+          {
+            "node": "Switch: Telegram Command",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Object Queue Item": {
+      "main": [
+        [
+          {
+            "node": "Make Kya Ho Agar YT Public",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Make Cute Little Elephant YT Public",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "IG: Create Object Reel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram: Ask Approval": {
+      "main": [
+        [
+          {
+            "node": "If: Approved?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RPOP publish:object_talking": {
+      "main": [
+        [
+          {
+            "node": "If: Object Video Exists?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notify: Publishing Object": {
+      "main": [
+        [
+          {
+            "node": "RPOP publish:object_talking",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If: Object Video Exists?": {
+      "main": [
+        [
+          {
+            "node": "Notify: No Object Video",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Parse Object Queue Item",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram: Send Preview Video": {
+      "main": [
+        [
+          {
+            "node": "Telegram: Ask Approval",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If: Approved?": {
+      "main": [
+        [
+          {
+            "node": "Download Final Video",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Notify: Approved",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notify: Rejected",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LRANGE publish:object_talking": {
+      "main": [
+        [
+          {
+            "node": "LLEN script:food_discovery",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "YT Upload: Cute Little Elephant": {
+      "main": [
+        [
+          {
+            "node": "Set cuteLittleElephant ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "YT Upload: Nutritoon": {
+      "main": [
+        [
+          {
+            "node": "Set nutriToon ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set cuteLittleElephant ID": {
+      "main": [
+        [
+          {
+            "node": "Merge Object Uploads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set nutriToon ID": {
+      "main": [
+        [
+          {
+            "node": "Merge Food Uploads",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Set chizoKiKahani ID": {
+      "main": [
+        [
+          {
+            "node": "Merge Food Uploads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate YouTube IDs": {
+      "main": [
+        [
+          {
+            "node": "Queue Router (by videoType)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query: cizo_ki_kahani": {
+      "main": [
+        [
+          {
+            "node": "Parse Object Memory Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RPOP object_talking (script)": {
+      "main": [
+        [
+          {
+            "node": "Respond: Object Script",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IG: Create Food Reel": {
+      "main": [
+        [
+          {
+            "node": "Wait 100s (Food IG Encode)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 100s (Food IG Encode)": {
+      "main": [
+        [
+          {
+            "node": "IG: Publish Food Reel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LLEN script:object_talking": {
+      "main": [
+        [
+          {
+            "node": "LRANGE publish:object_talking",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RPOP food_discovery (script)": {
+      "main": [
+        [
+          {
+            "node": "Respond: Food Script",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LPUSH object_talking (script)": {
+      "main": [
+        [
+          {
+            "node": "Respond: Object Script Stored",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook: Get Object Memory": {
+      "main": [
+        [
+          {
+            "node": "Query: cizo_ki_kahani",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook: Store Object Name": {
+      "main": [
+        [
+          {
+            "node": "Insert: cizo_ki_kahani",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook: Store Object Script": {
+      "main": [
+        [
+          {
+            "node": "LPUSH object_talking (script)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query: food_discovery": {
+      "main": [
+        [
+          {
+            "node": "Parse Food Memory Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Food Memory Rows": {
+      "main": [
+        [
+          {
+            "node": "Respond: Food Memory",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook: Get Food Memory": {
+      "main": [
+        [
+          {
+            "node": "Query: food_discovery",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Object Memory Rows": {
+      "main": [
+        [
+          {
+            "node": "Respond: Object Memory",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook: Store Food Name": {
+      "main": [
+        [
+          {
+            "node": "Insert: food_discovery",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook: Get Object Script": {
+      "main": [
+        [
+          {
+            "node": "RPOP object_talking (script)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook: Get Food Script": {
+      "main": [
+        [
+          {
+            "node": "RPOP food_discovery (script)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Webhook Payload": {
+      "main": [
+        [
+          {
+            "node": "Telegram: Send Preview Video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notify: Object Reel Posted": {
+      "main": [
+        []
+      ]
+    },
+    "IG: Publish Food Reel": {
+      "main": [
+        [
+          {
+            "node": "Notify: Food Reel Posted",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Object Uploads": {
+      "main": [
+        [
+          {
+            "node": "Aggregate YouTube IDs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Food Uploads": {
+      "main": [
+        [
+          {
+            "node": "Aggregate YouTube IDs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "YT Upload: Kya Ho Agar": {
+      "main": [
+        [
+          {
+            "node": "Set kyaHoAgar ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set kyaHoAgar ID": {
+      "main": [
+        [
+          {
+            "node": "Merge Object Uploads",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Queue Router (by videoType)": {
+      "main": [
+        [
+          {
+            "node": "LPUSH publish:object_talking",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "LPUSH publish:food_discovery",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LPUSH food_discovery (script)": {
+      "main": [
+        [
+          {
+            "node": "Respond: Food Script Stored",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook: Store Food Script": {
+      "main": [
+        [
+          {
+            "node": "LPUSH food_discovery (script)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch: Telegram Command": {
+      "main": [
+        [
+          {
+            "node": "Notify: Publishing Food",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notify: Publishing Object",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "LLEN script:object_talking",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notify: Publishing Food": {
+      "main": [
+        [
+          {
+            "node": "RPOP publish:food_discovery",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RPOP publish:food_discovery": {
+      "main": [
+        [
+          {
+            "node": "If: Food Video Exists?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If: Food Video Exists?": {
+      "main": [
+        [
+          {
+            "node": "Parse Food Queue Item",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notify: No Food Video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Food Queue Item": {
+      "main": [
+        [
+          {
+            "node": "Make Chizo Ki Kahani YT Public",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Make Nutritoon YT Public",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "IG: Create Food Reel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LLEN script:food_discovery": {
+      "main": [
+        [
+          {
+            "node": "LRANGE publish:food_discovery",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LRANGE publish:food_discovery": {
+      "main": [
+        [
+          {
+            "node": "Build Queue Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cron: Publish 8/12/18": {
+      "main": [
+        [
+          {
+            "node": "Notify: Publishing Food",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Notify: Publishing Object",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Queue Summary": {
+      "main": [
+        [
+          {
+            "node": "Telegram: Queue Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "6aad084c-4146-4eb1-82e1-5a2f8bd2b803",
+  "meta": {
+    "instanceId": "cfeb926375bc4b5a2e1db33b13f846d46134ebacc2330f1ab758adb5582cf6c2"
+  },
+  "id": "H4TQq1OeQA09DwYE",
+  "tags": []
+}

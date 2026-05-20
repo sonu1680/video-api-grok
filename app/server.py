@@ -24,19 +24,16 @@ from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
 
 # Import our automation core
-import app as grok_app
+from app import grok_client as grok_app
 
 # Import job persistence
-from cache.job_persistence import JobPersistence
-import chatgpt_visitor
+from app.persistence.job_persistence import JobPersistence
+from app.visitors import chatgpt_visitor
 
 # ─────────────────────────── CONFIG ───────────────────────────────────────────
 
-BASE_DIR     = Path(__file__).parent
-VIDEOS_DIR   = BASE_DIR / "videos"          # temp storage for generated videos
+from app.config import BASE_DIR, VIDEOS_DIR  # data/videos/, ensured to exist by app.config
 MAX_QUEUE    = 5                             # max jobs waiting in queue
-
-VIDEOS_DIR.mkdir(exist_ok=True)
 
 # ─────────────────────────── LOGGING ──────────────────────────────────────────
 
@@ -93,6 +90,8 @@ async def lifespan(app: FastAPI):
             log.info(f"  ▶ Resuming job {job_id} ({pipeline_type}) with {len(story_objs)} stories")
             if pipeline_type == "objectvideo":
                 asyncio.create_task(_run_objectvideo_pipeline(story_objs, job_id=job_id))
+            elif pipeline_type == "food_discovery":
+                asyncio.create_task(_run_objectvideo_pipeline(story_objs, job_id=job_id, video_type="food_discovery"))
             elif pipeline_type == "generate_images":
                 asyncio.create_task(_run_image_pipeline(story_objs, job_id=job_id))
             else:
@@ -102,6 +101,7 @@ async def lifespan(app: FastAPI):
         # If no pending jobs on startup, check the webhooks
         asyncio.create_task(_trigger_next_job_if_idle())
         asyncio.create_task(_trigger_chatgpt_job_if_idle())
+        asyncio.create_task(_trigger_food_discovery_job_if_idle())
 
     async def _polling_loop():
         """Continuously polls for new video jobs every 5 minutes."""
@@ -117,9 +117,17 @@ async def lifespan(app: FastAPI):
             log.info("⏰ 1-hour interval reached. Checking for new ChatGPT jobs...")
             await _trigger_chatgpt_job_if_idle()
 
+    async def _food_discovery_polling_loop():
+        """Continuously polls for new food_discovery jobs every 5 minutes."""
+        while True:
+            await asyncio.sleep(300)  # 5 minutes
+            log.info("⏰ 5-minute interval reached. Checking for new food_discovery jobs...")
+            await _trigger_food_discovery_job_if_idle()
+
     # Start the continuous polling loops
     asyncio.create_task(_polling_loop())
     asyncio.create_task(_chatgpt_polling_loop())
+    asyncio.create_task(_food_discovery_polling_loop())
 
     yield
     log.info("👋 GrokAPI server shutting down.")
@@ -223,10 +231,10 @@ def _cleanup(path: str) -> None:
 async def _process_payload_sequentially(payload: Union[TestPayload, List[StoryPayload]], video_type: str = "storyvideo"):
     stories = payload.stories if isinstance(payload, TestPayload) else payload
     
-    from modules.video_processor import generate_modules_sequentially
-    from modules.video_merger import merge_videos
-    from modules.video_uploader import upload_video_to_r2
-    from modules.webhook_sender import send_n8n_webhook
+    from app.pipelines.video_processor import generate_modules_sequentially
+    from app.pipelines.video_merger import merge_videos
+    from app.pipelines.video_uploader import upload_video_to_r2
+    from app.integrations.webhook_sender import send_n8n_webhook
     import datetime
 
     for story in stories:
@@ -397,9 +405,32 @@ async def api_objectvideo(payload: Union[TestPayload, List[StoryPayload]], backg
     )
 
 
-async def _run_objectvideo_pipeline(stories: list, job_id: str = None) -> None:
+@app.post(
+    "/api/food_discovery",
+    summary="Generate food discovery videos sequentially with parallel module workers",
+)
+async def api_food_discovery(payload: Union[TestPayload, List[StoryPayload]], background_tasks: BackgroundTasks):
     """
-    Background worker for /api/objectvideo.
+    Acts like objectvideo but uses food_discovery pipeline tagging and webhook routing.
+    """
+    stories = payload.stories if isinstance(payload, TestPayload) else payload
+
+    # Persist payload so the job can be resumed after a server restart
+    story_dicts = [s.dict() for s in stories]
+    job_id = JobPersistence.create("food_discovery", story_dicts)
+    log.info(f"💾 Persisted food_discovery job {job_id} with {len(story_dicts)} stories")
+
+    background_tasks.add_task(_run_objectvideo_pipeline, stories, job_id, video_type="food_discovery")
+    return JSONResponse(
+        status_code=202,
+        content={"status": "processing", "job_id": job_id, "message": "Food discovery video generation started in the background."}
+    )
+
+
+
+async def _run_objectvideo_pipeline(stories: list, job_id: str = None, video_type: str = "objectvideo") -> None:
+    """
+    Background worker for /api/objectvideo and /api/food_discovery.
     Phase 1: Generate images for all modules (separate Chrome profile).
     Phase 2: Generate videos with those images uploaded (default Chrome profile).
     Then merges, uploads to R2, and fires webhook.
@@ -407,10 +438,10 @@ async def _run_objectvideo_pipeline(stories: list, job_id: str = None) -> None:
     job_id: If provided, progress is checkpointed and the job file is cleaned up on success.
     """
     import datetime
-    from modules.image_processor import generate_image_modules_sequentially
-    from modules.video_merger import merge_videos
-    from modules.video_uploader import upload_video_to_r2
-    from modules.webhook_sender import send_n8n_webhook
+    from app.pipelines.image_processor import generate_image_modules_sequentially
+    from app.pipelines.video_merger import merge_videos
+    from app.pipelines.video_uploader import upload_video_to_r2
+    from app.integrations.webhook_sender import send_n8n_webhook
 
     if job_id:
         JobPersistence.mark_running(job_id)
@@ -428,7 +459,7 @@ async def _run_objectvideo_pipeline(stories: list, job_id: str = None) -> None:
                 
                 if prog.get("phase1_done"):
                     log.info(f"[story_id: {current_story_id}] ⏭️  Phase 1 already done — loading cached image paths")
-                    from config import IMAGES_DIR
+                    from app.config import IMAGES_DIR
                     generated_image_paths = []
                     for m in modules:
                         p = IMAGES_DIR / current_story_id / f"module_{m.module_number}img.jpg"
@@ -458,7 +489,7 @@ async def _run_objectvideo_pipeline(stories: list, job_id: str = None) -> None:
 
                 def _run_gen():
                     module_dicts = [m.dict() for m in modules]
-                    from modules.object_video_processor import generate_object_modules_parallel
+                    from app.pipelines.object_video_processor import generate_object_modules_parallel
                     return generate_object_modules_parallel(current_story_id, module_dicts, image_paths=image_paths)
 
                 generated_video_paths = await loop.run_in_executor(None, _run_gen)
@@ -487,7 +518,7 @@ async def _run_objectvideo_pipeline(stories: list, job_id: str = None) -> None:
 
                 # 5. Webhook and Cleanup
                 if upload_success:
-                    from config import VIDEO_PUBLIC_DOMAIN, VIDEOS_DIR
+                    from app.config import VIDEO_PUBLIC_DOMAIN, VIDEOS_DIR
                     send_n8n_webhook(
                         str(current_story_id), 
                         bucket_filename, 
@@ -495,7 +526,7 @@ async def _run_objectvideo_pipeline(stories: list, job_id: str = None) -> None:
                         title=story.title,
                         description=story.description,
                         tags=story.tags,
-                        video_type="objectvideo"
+                        video_type=video_type
                     )
                     
                     # Cleanup videos folder
@@ -508,7 +539,7 @@ async def _run_objectvideo_pipeline(stories: list, job_id: str = None) -> None:
                         log.warning(f"[story_id: {current_story_id}] ⚠️ Failed to clean up videos directory: {e}")
                     
                     # Cleanup images folder
-                    from config import IMAGES_DIR
+                    from app.config import IMAGES_DIR
                     try:
                         send2trash(str(IMAGES_DIR.absolute()))
                         IMAGES_DIR.mkdir(exist_ok=True)
@@ -529,7 +560,10 @@ async def _run_objectvideo_pipeline(stories: list, job_id: str = None) -> None:
             JobPersistence.mark_done(job_id)
 
     # ── Check for more jobs after completion ────────────────────────────────
-    asyncio.create_task(_trigger_next_job_if_idle())
+    if video_type == "food_discovery":
+        asyncio.create_task(_trigger_food_discovery_job_if_idle())
+    else:
+        asyncio.create_task(_trigger_next_job_if_idle())
 
 
 async def _trigger_next_job_if_idle():
@@ -537,7 +571,7 @@ async def _trigger_next_job_if_idle():
     Checks if there are any pending jobs in the cache. 
     If not, polls the n8n webhook for new work.
     """
-    from modules.job_fetcher import fetch_new_jobs
+    from app.integrations.job_fetcher import fetch_new_jobs
     
     pending = JobPersistence.list_pending()
     if pending:
@@ -567,6 +601,44 @@ async def _trigger_next_job_if_idle():
             log.warning("Worker: Webhook returned data but no valid stories were parsed.")
     else:
         log.info("Worker: No new jobs found at webhook.")
+
+
+async def _trigger_food_discovery_job_if_idle():
+    """
+    Checks if there are any pending jobs in the cache. 
+    If not, polls the food_discovery webhook for new work.
+    """
+    from app.integrations.job_fetcher import fetch_food_discovery_jobs
+    
+    pending = JobPersistence.list_pending()
+    if pending:
+        log.info(f"Food Discovery Worker: {len(pending)} job(s) currently in queue (pending/running). Skipping webhook poll.")
+        return
+
+    log.info("Food Discovery Worker: Queue is empty or idle. Fetching new food_discovery jobs from webhook...")
+    loop = asyncio.get_running_loop()
+    stories_raw = await loop.run_in_executor(None, fetch_food_discovery_jobs)
+    
+    if stories_raw:
+        # Convert to StoryPayload objects
+        story_objs = []
+        for s in stories_raw:
+            try:
+                story_objs.append(StoryPayload(**s))
+            except Exception as e:
+                log.warning(f"Food Discovery Worker: Failed to parse story from webhook: {e}")
+        
+        if story_objs:
+            # Create a new job in the cache
+            job_id = JobPersistence.create("food_discovery", stories_raw)
+            log.info(f"Food Discovery Worker: Starting new job {job_id} with {len(story_objs)} stories.")
+            # Trigger the pipeline in the background
+            asyncio.create_task(_run_objectvideo_pipeline(story_objs, job_id=job_id, video_type="food_discovery"))
+        else:
+            log.warning("Food Discovery Worker: Webhook returned data but no valid stories were parsed.")
+    else:
+        log.info("Food Discovery Worker: No new food_discovery jobs found at webhook.")
+
 
 
 @app.post(
@@ -615,8 +687,8 @@ async def api_scrape_myntra(body: ScrapeMyntraRequest, background_tasks: Backgro
     log.info(f"🛒 New Myntra scraping request → URL: {url}")
     
     try:
-        from modules.myntra_scraper import scrape_myntra_images, extract_product_id
-        from modules.myntra_processor import process_myntra_images_with_grok
+        from app.pipelines.myntra_scraper import scrape_myntra_images, extract_product_id
+        from app.pipelines.myntra_processor import process_myntra_images_with_grok
         
         loop = asyncio.get_running_loop()
         # Run scraper in thread pool to avoid blocking the event loop
@@ -645,7 +717,7 @@ async def _run_image_pipeline(stories: list, job_id: str = None) -> None:
     Generates images, bypassing R2 upload and webhooks.
     job_id: If provided, progress is checkpointed.
     """
-    from modules.image_processor import generate_image_modules_sequentially
+    from app.pipelines.image_processor import generate_image_modules_sequentially
 
     if job_id:
         JobPersistence.mark_running(job_id)
@@ -695,7 +767,7 @@ async def _trigger_chatgpt_job_if_idle():
     Checks if there are any pending ChatGPT jobs in the cache. 
     If not, polls the n8n webhook for new ChatGPT work.
     """
-    from modules.job_fetcher import fetch_chatgpt_jobs
+    from app.integrations.job_fetcher import fetch_chatgpt_jobs
     
     pending = JobPersistence.list_pending()
     if any(job.get("pipeline_type") == "chatgpt_generation" for job in pending):
@@ -818,7 +890,7 @@ class WebhookTestPayload(BaseModel):
 
 @app.post("/api/test_webhook", summary="Test the n8n webhook module independently")
 async def test_webhook(payload: WebhookTestPayload, background_tasks: BackgroundTasks):
-    from modules.webhook_sender import send_n8n_webhook
+    from app.integrations.webhook_sender import send_n8n_webhook
     def _run_test():
         send_n8n_webhook(
             payload.story_id, 
@@ -838,7 +910,7 @@ class UploadTestPayload(BaseModel):
 
 @app.post("/api/test_upload", summary="Test the R2 upload module independently")
 async def test_upload(payload: UploadTestPayload, background_tasks: BackgroundTasks):
-    from modules.video_uploader import upload_video_to_r2
+    from app.pipelines.video_uploader import upload_video_to_r2
     def _run_test():
         upload_video_to_r2(payload.file_path, payload.bucket_filename)
     background_tasks.add_task(_run_test)
@@ -850,7 +922,7 @@ class MergeTestPayload(BaseModel):
 
 @app.post("/api/test_merge", summary="Test the video merging module independently")
 async def test_merge(payload: MergeTestPayload, background_tasks: BackgroundTasks):
-    from modules.video_merger import merge_videos
+    from app.pipelines.video_merger import merge_videos
     from pathlib import Path
     
     def _run_test():

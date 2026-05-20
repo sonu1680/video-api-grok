@@ -1,15 +1,15 @@
 """
-Job Persistence — cache/job_persistence.py
-=========================================
+Job Persistence — app/persistence/job_persistence.py
+====================================================
 Saves and restores pending job payloads so the pipeline can resume
 after a server restart or unexpected crash.
 
-Job files are stored as JSON in cache/jobs/<job_id>.json
+Job files are stored as JSON in data/jobs/<job_id>.json
 
 Structure of a job file:
 {
     "job_id": "...",
-    "pipeline_type": "objectvideo" | "generate_images" | "chatgpt_generation",
+    "pipeline_type": "objectvideo" | "generate_images" | "chatgpt_generation" | "food_discovery",
     "created_at": "ISO8601",
     "status": "pending" | "running" | "done" | "failed",
     "stories": [ <serialised story dicts> ],
@@ -32,8 +32,7 @@ from pathlib import Path
 
 log = logging.getLogger("GrokAPI.JobPersistence")
 
-JOBS_DIR = Path(__file__).parent / "jobs"
-JOBS_DIR.mkdir(parents=True, exist_ok=True)
+from app.config import JOBS_DIR  # data/jobs/, ensured to exist by app.config
 
 
 class JobPersistence:

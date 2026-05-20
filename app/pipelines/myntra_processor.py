@@ -5,9 +5,9 @@ from pathlib import Path
 from typing import List
 from playwright.sync_api import sync_playwright
 
-import app as grok_app
-from app import IMAGE_USER_DATA, GrokTimeoutError
-from config import IMAGES_DIR
+from app import grok_client as grok_app
+from app.grok_client import IMAGE_USER_DATA, GrokTimeoutError
+from app.config import IMAGES_DIR
 
 log = logging.getLogger("GrokAPI.MyntraProcessor")
 
@@ -70,8 +70,8 @@ GROK_DRESS_PROMPT = (
 )
 
 # Path to the base model image (green screen model identity reference)
-_BASE_DIR = Path(__file__).parent.parent
-MYNTRA_BASE_MODEL_PATH = str(_BASE_DIR / "default_images" / "myntra.jpeg")
+from app.config import ASSETS_DIR
+MYNTRA_BASE_MODEL_PATH = str(ASSETS_DIR / "default_images" / "myntra.jpeg")
 
 
 def _start_editing_session(p_context, image_path):

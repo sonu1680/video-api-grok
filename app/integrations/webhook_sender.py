@@ -4,12 +4,28 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 import urllib3
 import logging
-from config import N8N_WEBHOOK_URL, VIDEO_PUBLIC_DOMAIN
+from app.config import N8N_WEBHOOK_URL, VIDEO_PUBLIC_DOMAIN
 
 # Suppress insecure request warnings if verify=False is used
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 log = logging.getLogger("GrokAPI.Webhook")
+
+# Maps internal Python vocabulary to the rules-compliant n8n contract.
+# n8n's Switch only routes on these two values; anything else falls through.
+_VIDEO_TYPE_TO_N8N = {
+    "objectvideo":    "object_talking",
+    "storyvideo":     "food_discovery",
+    "food_discovery": "food_discovery",
+    "object_talking": "object_talking",
+}
+
+def _normalize_video_type(video_type: str) -> str:
+    normalized = _VIDEO_TYPE_TO_N8N.get(video_type)
+    if normalized is None:
+        log.warning(f"⚠️ Unknown video_type '{video_type}' — sending as-is; n8n Switch will not match.")
+        return video_type
+    return normalized
 
 def create_retrying_session() -> requests.Session:
     session = requests.Session()
@@ -40,6 +56,9 @@ def send_n8n_webhook(story_id: str, bucket_filename: str, timestamp_str: str, ti
     try:
         public_video_url = f"{VIDEO_PUBLIC_DOMAIN}/{bucket_filename}"
         
+        # Normalize to the rules-compliant n8n contract (object_talking | food_discovery)
+        n8n_video_type = _normalize_video_type(video_type)
+
         # Text fields
         data_payload = {
             "story_id": story_id,
@@ -48,7 +67,7 @@ def send_n8n_webhook(story_id: str, bucket_filename: str, timestamp_str: str, ti
             "title": title,
             "description": description,
             "tags": tags,
-            "video_type": video_type
+            "video_type": n8n_video_type
         }
         
         log.info(f"[story_id: {story_id}] 📡 Sending JSON webhook to {N8N_WEBHOOK_URL}")

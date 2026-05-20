@@ -1,4 +1,4 @@
-from modules.video_trimmer import detect_last_dialogue_end, trim_video_to_timestamp, get_video_duration
+from app.pipelines.video_trimmer import detect_last_dialogue_end, trim_video_to_timestamp, get_video_duration
 from pathlib import Path
 
 test_vid = Path("test_assets/test_video.mp4")

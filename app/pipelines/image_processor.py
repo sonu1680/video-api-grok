@@ -4,9 +4,9 @@ import time
 from pathlib import Path
 from typing import List
 from playwright.sync_api import sync_playwright
-import app as grok_app
-from app import IMAGE_USER_DATA, GrokTimeoutError
-from config import IMAGES_DIR
+from app import grok_client as grok_app
+from app.grok_client import IMAGE_USER_DATA, GrokTimeoutError
+from app.config import IMAGES_DIR
 
 log = logging.getLogger("GrokAPI.ImageProcessor")
 

@@ -2,7 +2,6 @@
 __pycache__/
 *.py[cod]
 *.pyo
-__pycache__
 
 # Virtual environments
 venv/
@@ -23,17 +22,29 @@ venv/
 *.sqlite3
 
 # Python packaging
+*.egg-info/
+
+# Build output (Python packaging + Node tsc output, e.g. mcp/build/)
 build/
 dist/
-*.egg-info/
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-error.log*
 
 # Jupyter Notebook
 .ipynb_checkpoints/
 
-# Your custom folders/files
-videos/
-images/
+# Runtime data (videos, images, persisted job state)
+data/
+
+# Backup / scratch files
+*.bak
+*.swp
+*.swo
+
+# Stray generated artifacts
 *.png
 ai-grok-video-generation-automation.py*.json
 ai-video-generator-*.json
-cache/jobs

@@ -5,9 +5,9 @@ import concurrent.futures
 from pathlib import Path
 from typing import List, Dict, Optional
 from playwright.sync_api import sync_playwright
-import app as grok_app
-from app import GrokTimeoutError
-from config import VIDEOS_DIR, VIDEO_PROFILES
+from app import grok_client as grok_app
+from app.grok_client import GrokTimeoutError
+from app.config import VIDEOS_DIR, VIDEO_PROFILES
 
 log = logging.getLogger("GrokAPI.ObjectVideoProcessor")
 
